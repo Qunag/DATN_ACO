@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    grid_nodes.nod.xml – Mạng lưới 3×3 (9 nút giao)
+    ==================================================
+    Bố cục tọa độ (mỗi ô cách nhau 500m):
+
+         A(0,500)  ─── B(500,500)  ─── C(1000,500)
+              │              │               │
+         D(0,0)    ─── E(500,0)    ─── F(1000,0)
+              │              │               │
+         G(0,-500) ─── H(500,-500) ─── I(1000,-500)
+
+    Tất cả 9 nút đều có đèn tín hiệu (traffic_light).
+    Đây là bước chuẩn bị để tích hợp ACO với nhiều tuyến lựa chọn.
+
+    Các tuyến có thể từ A đến I:
+      A→B→C→F→I  (đi theo rìa bên phải)
+      A→B→E→F→I  (đi qua trung tâm)
+      A→D→E→F→I  (đi qua giữa)
+      A→D→E→H→I  (đi qua giữa rồi xuống)
+      A→D→G→H→I  (đi theo rìa bên trái)
+      A→B→E→H→I  (đi theo đường chéo)
+-->
+<nodes>
+    <!-- Hàng trên -->
+    <node id="A" x="0"    y="500"  type="traffic_light"/>
+    <node id="B" x="500"  y="500"  type="traffic_light"/>
+    <node id="C" x="1000" y="500"  type="traffic_light"/>
+
+    <!-- Hàng giữa -->
+    <node id="D" x="0"    y="0"    type="traffic_light"/>
+    <node id="E" x="500"  y="0"    type="traffic_light"/>
+    <node id="F" x="1000" y="0"    type="traffic_light"/>
+
+    <!-- Hàng dưới -->
+    <node id="G" x="0"    y="-500" type="traffic_light"/>
+    <node id="H" x="500"  y="-500" type="traffic_light"/>
+    <node id="I" x="1000" y="-500" type="traffic_light"/>
+</nodes>

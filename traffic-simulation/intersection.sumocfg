@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    intersection.sumocfg – File cấu hình chính của SUMO
+    =====================================================
+    File này được dùng khi chạy với SUMO-GUI hoặc sumo trực tiếp.
+    Khi chạy qua Python (monitor.py), file này được truyền qua TraCI.
+
+    Cấu hình đèn tín hiệu mặc định (fixed-time):
+      Phase 1: Bắc–Nam GREEN, Đông–Tây RED   → 30s
+      Phase 2: Bắc–Nam YELLOW                 → 3s
+      Phase 3: Đông–Tây GREEN, Bắc–Nam RED   → 30s
+      Phase 4: Đông–Tây YELLOW                → 3s
+      Tổng chu kỳ: 66 giây
+-->
+<configuration>
+    <input>
+        <!-- File mạng đường (được build bởi netconvert) -->
+        <net-file value="network/intersection.net.xml"/>
+
+        <!-- File routes mac dinh (TH3 - 600 xe/h).
+             Khi chay thi nghiem qua run_experiments.py,
+             file nay se duoc override bang tham so route-files. -->
+        <route-files value="routes/routes_TH3.rou.xml"/>
+    </input>
+
+    <output>
+        <!-- Xuất thông tin chuyến đi của từng phương tiện -->
+        <tripinfo-output value="output/tripinfo.xml"/>
+
+        <!-- Xuất thống kê tóm tắt -->
+        <summary-output value="output/summary.xml"/>
+    </output>
+
+    <time>
+        <!-- Thời gian bắt đầu: giây 0 -->
+        <begin value="0"/>
+
+        <!--
+            Thời gian kết thúc: 3600 giây = 1 giờ mô phỏng.
+            Có thể giảm xuống 1800 để kiểm tra nhanh.
+        -->
+        <end value="3600"/>
+
+        <!-- Bước mô phỏng: 1 giây -->
+        <step-length value="1"/>
+    </time>
+
+    <processing>
+        <!-- Bật thống kê cuối simulation -->
+        <statistic-output value="output/statistics.xml"/>
+
+        <!-- Cho phép phương tiện chờ khi không đủ khoảng cách xuất hiện -->
+        <waiting-time-memory value="100"/>
+
+        <!-- Không tự động xóa xe bị kẹt quá lâu (để quan sát ùn tắc) -->
+        <time-to-teleport value="-1"/>
+    </processing>
+
+    <report>
+        <!-- Giảm thiểu log không cần thiết ra console -->
+        <verbose value="false"/>
+        <no-step-log value="true"/>
+    </report>
+</configuration>

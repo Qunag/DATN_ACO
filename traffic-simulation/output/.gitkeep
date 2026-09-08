@@ -1,0 +1,10 @@
+# Thư mục này chứa kết quả đầu ra từ SUMO và TraCI
+# Các file sẽ được tạo tự động khi chạy monitor.py hoặc run_experiments.py
+
+# Các file output mong đợi:
+# - traffic_TH1.csv ... traffic_TH6.csv  : Dữ liệu TraCI theo thời gian
+# - tripinfo_TH1.xml ... tripinfo_TH6.xml: SUMO TripInfo output
+# - summary_TH1.xml ... summary_TH6.xml  : SUMO Summary output
+# - comparison.csv                        : Bảng so sánh 6 kịch bản
+# - analysis_results.csv                  : Kết quả phân tích tổng hợp
+# - analysis_plot.png                     : Biểu đồ so sánh (nếu có matplotlib)

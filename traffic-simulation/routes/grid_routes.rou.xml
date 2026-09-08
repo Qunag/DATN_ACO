@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    grid_routes.rou.xml – Routes cho mạng lưới 3×3
+    ================================================
+    6 tuyến đường từ A đến I theo Báo cáo 2, Mục 15.
+    Thêm luồng từ nhiều cặp OD (Origin-Destination) khác nhau
+    để tạo giao thoa tại các nút trung gian.
+
+    Lưu lượng tổng: 400 xe/h (lưu lượng vừa để quan sát định tuyến)
+    Mục đích chính: kiểm tra ACO tìm tuyến tối ưu trong mạng đa tuyến.
+-->
+<routes>
+    <vType id="car" vClass="passenger" length="4.5" minGap="2.5"
+           maxSpeed="13.89" accel="2.6" decel="4.5" sigma="0.5" color="0.0,0.5,1.0"/>
+
+    <!-- ═══════════════════════════════════════════════
+         6 tuyến từ A đến I (theo Báo cáo 2, Mục 15)
+         ═══════════════════════════════════════════════ -->
+    <!-- Tuyến 1: Rìa trên – phải -->
+    <route id="r_A2I_1" edges="A2B B2C C2F F2I"/>
+    <!-- Tuyến 2: Trên rồi giữa -->
+    <route id="r_A2I_2" edges="A2B B2E E2F F2I"/>
+    <!-- Tuyến 3: Giữa toàn bộ -->
+    <route id="r_A2I_3" edges="A2D D2E E2F F2I"/>
+    <!-- Tuyến 4: Giữa rồi xuống -->
+    <route id="r_A2I_4" edges="A2D D2E E2H H2I"/>
+    <!-- Tuyến 5: Rìa trái – dưới -->
+    <route id="r_A2I_5" edges="A2D D2G G2H H2I"/>
+    <!-- Tuyến 6: Trên rồi giữa rồi xuống -->
+    <route id="r_A2I_6" edges="A2B B2E E2H H2I"/>
+
+    <!-- ═══════════════════════════════════════════════
+         Tuyến ngược: I đến A
+         ═══════════════════════════════════════════════ -->
+    <route id="r_I2A_1" edges="I2F F2C C2B B2A"/>
+    <route id="r_I2A_2" edges="I2F F2E E2B B2A"/>
+    <route id="r_I2A_3" edges="I2H H2E E2D D2A"/>
+    <route id="r_I2A_4" edges="I2H H2G G2D D2A"/>
+
+    <!-- ═══════════════════════════════════════════════
+         Tuyến ngang: A đến C và ngược lại
+         ═══════════════════════════════════════════════ -->
+    <route id="r_A2C" edges="A2B B2C"/>
+    <route id="r_C2A" edges="C2B B2A"/>
+    <route id="r_G2I" edges="G2H H2I"/>
+    <route id="r_I2G" edges="I2H H2G"/>
+
+    <!-- ═══════════════════════════════════════════════
+         Tuyến dọc: A đến G và ngược lại
+         ═══════════════════════════════════════════════ -->
+    <route id="r_A2G" edges="A2D D2G"/>
+    <route id="r_G2A" edges="G2D D2A"/>
+    <route id="r_C2I" edges="C2F F2I"/>
+    <route id="r_I2C" edges="I2F F2C"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         LUỒNG XE – Nhiều cặp OD để tạo giao tranh tại nút trung tâm E
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- A → I: chia đều cho 3 tuyến chính để ACO có thể so sánh -->
+    <flow id="f_A2I_1" type="car" route="r_A2I_1" begin="0" end="3600" vehsPerHour="133" departLane="best" departSpeed="max"/>
+    <flow id="f_A2I_2" type="car" route="r_A2I_2" begin="0" end="3600" vehsPerHour="133" departLane="best" departSpeed="max"/>
+    <flow id="f_A2I_3" type="car" route="r_A2I_4" begin="0" end="3600" vehsPerHour="133" departLane="best" departSpeed="max"/>
+
+    <!-- I → A -->
+    <flow id="f_I2A_1" type="car" route="r_I2A_1" begin="0" end="3600" vehsPerHour="133" departLane="best" departSpeed="max"/>
+    <flow id="f_I2A_2" type="car" route="r_I2A_3" begin="0" end="3600" vehsPerHour="133" departLane="best" departSpeed="max"/>
+    <flow id="f_I2A_3" type="car" route="r_I2A_4" begin="0" end="3600" vehsPerHour="133" departLane="best" departSpeed="max"/>
+
+    <!-- A → C và G → I (giao tranh với luồng dọc tại B và H) -->
+    <flow id="f_A2C"   type="car" route="r_A2C"   begin="0" end="3600" vehsPerHour="200" departLane="best" departSpeed="max"/>
+    <flow id="f_C2A"   type="car" route="r_C2A"   begin="0" end="3600" vehsPerHour="200" departLane="best" departSpeed="max"/>
+    <flow id="f_G2I"   type="car" route="r_G2I"   begin="0" end="3600" vehsPerHour="200" departLane="best" departSpeed="max"/>
+    <flow id="f_I2G"   type="car" route="r_I2G"   begin="0" end="3600" vehsPerHour="200" departLane="best" departSpeed="max"/>
+
+    <!-- A → G và C → I (giao tranh với luồng ngang tại D và F) -->
+    <flow id="f_A2G"   type="car" route="r_A2G"   begin="0" end="3600" vehsPerHour="150" departLane="best" departSpeed="max"/>
+    <flow id="f_G2A"   type="car" route="r_G2A"   begin="0" end="3600" vehsPerHour="150" departLane="best" departSpeed="max"/>
+    <flow id="f_C2I"   type="car" route="r_C2I"   begin="0" end="3600" vehsPerHour="150" departLane="best" departSpeed="max"/>
+    <flow id="f_I2C"   type="car" route="r_I2C"   begin="0" end="3600" vehsPerHour="150" departLane="best" departSpeed="max"/>
+</routes>

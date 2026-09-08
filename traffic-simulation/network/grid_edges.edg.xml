@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    grid_edges.edg.xml – Edges cho mạng lưới 3×3
+    ==============================================
+    Tổng cộng 24 edges (12 đoạn đường × 2 chiều).
+
+    Đặt tên theo quy tắc: [Node1]2[Node2]
+    Ví dụ: A2B = từ A đến B, B2A = từ B đến A
+
+    Phân loại:
+    - Đường trục ngang (horizontal): A-B-C, D-E-F, G-H-I
+    - Đường trục dọc (vertical)    : A-D-G, B-E-H, C-F-I
+
+    Thông số: 2 làn, tốc độ 50km/h, chiều dài 500m (tính tự động từ tọa độ)
+-->
+<edges>
+    <!-- ══════════════════════════════════
+         HÀNG TRÊN: A ─── B ─── C
+         ══════════════════════════════════ -->
+    <edge id="A2B" from="A" to="B" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="B2A" from="B" to="A" numLanes="2" speed="13.89" priority="1"/>
+
+    <edge id="B2C" from="B" to="C" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="C2B" from="C" to="B" numLanes="2" speed="13.89" priority="1"/>
+
+    <!-- ══════════════════════════════════
+         HÀNG GIỮA: D ─── E ─── F
+         ══════════════════════════════════ -->
+    <edge id="D2E" from="D" to="E" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="E2D" from="E" to="D" numLanes="2" speed="13.89" priority="1"/>
+
+    <edge id="E2F" from="E" to="F" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="F2E" from="F" to="E" numLanes="2" speed="13.89" priority="1"/>
+
+    <!-- ══════════════════════════════════
+         HÀNG DƯỚI: G ─── H ─── I
+         ══════════════════════════════════ -->
+    <edge id="G2H" from="G" to="H" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="H2G" from="H" to="G" numLanes="2" speed="13.89" priority="1"/>
+
+    <edge id="H2I" from="H" to="I" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="I2H" from="I" to="H" numLanes="2" speed="13.89" priority="1"/>
+
+    <!-- ══════════════════════════════════
+         CỘT TRÁI: A ─── D ─── G
+         ══════════════════════════════════ -->
+    <edge id="A2D" from="A" to="D" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="D2A" from="D" to="A" numLanes="2" speed="13.89" priority="1"/>
+
+    <edge id="D2G" from="D" to="G" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="G2D" from="G" to="D" numLanes="2" speed="13.89" priority="1"/>
+
+    <!-- ══════════════════════════════════
+         CỘT GIỮA: B ─── E ─── H
+         ══════════════════════════════════ -->
+    <edge id="B2E" from="B" to="E" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="E2B" from="E" to="B" numLanes="2" speed="13.89" priority="1"/>
+
+    <edge id="E2H" from="E" to="H" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="H2E" from="H" to="E" numLanes="2" speed="13.89" priority="1"/>
+
+    <!-- ══════════════════════════════════
+         CỘT PHẢI: C ─── F ─── I
+         ══════════════════════════════════ -->
+    <edge id="C2F" from="C" to="F" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="F2C" from="F" to="C" numLanes="2" speed="13.89" priority="1"/>
+
+    <edge id="F2I" from="F" to="I" numLanes="2" speed="13.89" priority="1"/>
+    <edge id="I2F" from="I" to="F" numLanes="2" speed="13.89" priority="1"/>
+</edges>

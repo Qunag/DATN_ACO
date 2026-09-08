@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    routes_mixed.rou.xml – Mức 2: Hỗn hợp nhiều loại phương tiện
+    ==============================================================
+    Thành phần phương tiện gần với thực tế Việt Nam:
+      - Xe máy (motorcycle) : 60% lưu lượng – nhỏ, nhanh, len lỏi
+      - Xe con  (passenger)  : 30% lưu lượng – tiêu chuẩn
+      - Xe buýt (bus)        :  7% lưu lượng – chậm, lớn
+      - Xe tải  (truck)      :  3% lưu lượng – chậm nhất, nặng nhất
+
+    Lưu lượng tổng: tương đương TH4 (800 xe/h) nhưng hỗn hợp loại xe.
+    Tác động: xe buýt và xe tải làm chậm dòng xe, ảnh hưởng queue.
+-->
+<routes>
+
+    <!-- ─────────────────────────────────────────────────────────
+         Định nghĩa các loại phương tiện
+         ───────────────────────────────────────────────────────── -->
+
+    <!-- Xe máy: nhỏ nhất, len lỏi giỏi (sigma cao = hành vi ngẫu nhiên hơn) -->
+    <vType id="motorbike" vClass="motorcycle"
+           length="2.2" width="0.8" minGap="1.0"
+           maxSpeed="16.67" accel="3.5" decel="5.0"
+           sigma="0.7" tau="0.8"
+           color="0.4,0.8,0.2"/>
+
+    <!-- Xe con: tiêu chuẩn -->
+    <vType id="car" vClass="passenger"
+           length="4.5" width="1.8" minGap="2.5"
+           maxSpeed="13.89" accel="2.6" decel="4.5"
+           sigma="0.5" tau="1.0"
+           color="0.2,0.5,1.0"/>
+
+    <!-- Xe buýt: chậm, chiếm nhiều diện tích, dừng đỗ -->
+    <vType id="bus" vClass="bus"
+           length="12.0" width="2.5" minGap="3.0"
+           maxSpeed="11.11" accel="1.2" decel="3.5"
+           sigma="0.3" tau="1.5"
+           color="1.0,0.7,0.0"/>
+
+    <!-- Xe tải: nặng nhất, gia tốc chậm, khoảng cách lớn -->
+    <vType id="truck" vClass="truck"
+           length="8.0" width="2.4" minGap="3.5"
+           maxSpeed="11.11" accel="1.0" decel="3.0"
+           sigma="0.3" tau="1.8"
+           color="0.8,0.2,0.2"/>
+
+    <!-- ─────────────────────────────────────────────────────────
+         Tuyến đường
+         ───────────────────────────────────────────────────────── -->
+    <route id="route_NS" edges="N2C C2S"/>
+    <route id="route_SN" edges="S2C C2N"/>
+    <route id="route_EW" edges="E2C C2W"/>
+    <route id="route_WE" edges="W2C C2E"/>
+
+    <!-- ─────────────────────────────────────────────────────────
+         Luồng XE MÁY (60% × 800 = 480 xe/h mỗi hướng)
+         ───────────────────────────────────────────────────────── -->
+    <flow id="moto_NS" type="motorbike" route="route_NS" begin="0" end="3600" vehsPerHour="480" departLane="best" departSpeed="max"/>
+    <flow id="moto_SN" type="motorbike" route="route_SN" begin="0" end="3600" vehsPerHour="480" departLane="best" departSpeed="max"/>
+    <flow id="moto_EW" type="motorbike" route="route_EW" begin="0" end="3600" vehsPerHour="480" departLane="best" departSpeed="max"/>
+    <flow id="moto_WE" type="motorbike" route="route_WE" begin="0" end="3600" vehsPerHour="480" departLane="best" departSpeed="max"/>
+
+    <!-- ─────────────────────────────────────────────────────────
+         Luồng XE CON (30% × 800 = 240 xe/h mỗi hướng)
+         ───────────────────────────────────────────────────────── -->
+    <flow id="car_NS" type="car" route="route_NS" begin="0" end="3600" vehsPerHour="240" departLane="best" departSpeed="max"/>
+    <flow id="car_SN" type="car" route="route_SN" begin="0" end="3600" vehsPerHour="240" departLane="best" departSpeed="max"/>
+    <flow id="car_EW" type="car" route="route_EW" begin="0" end="3600" vehsPerHour="240" departLane="best" departSpeed="max"/>
+    <flow id="car_WE" type="car" route="route_WE" begin="0" end="3600" vehsPerHour="240" departLane="best" departSpeed="max"/>
+
+    <!-- ─────────────────────────────────────────────────────────
+         Luồng XE BUÝT (7% × 800 = 56 xe/h mỗi hướng)
+         ───────────────────────────────────────────────────────── -->
+    <flow id="bus_NS" type="bus" route="route_NS" begin="0" end="3600" vehsPerHour="56" departLane="best" departSpeed="max"/>
+    <flow id="bus_SN" type="bus" route="route_SN" begin="0" end="3600" vehsPerHour="56" departLane="best" departSpeed="max"/>
+    <flow id="bus_EW" type="bus" route="route_EW" begin="0" end="3600" vehsPerHour="56" departLane="best" departSpeed="max"/>
+    <flow id="bus_WE" type="bus" route="route_WE" begin="0" end="3600" vehsPerHour="56" departLane="best" departSpeed="max"/>
+
+    <!-- ─────────────────────────────────────────────────────────
+         Luồng XE TẢI (3% × 800 = 24 xe/h mỗi hướng)
+         ───────────────────────────────────────────────────────── -->
+    <flow id="truck_NS" type="truck" route="route_NS" begin="0" end="3600" vehsPerHour="24" departLane="best" departSpeed="max"/>
+    <flow id="truck_SN" type="truck" route="route_SN" begin="0" end="3600" vehsPerHour="24" departLane="best" departSpeed="max"/>
+    <flow id="truck_EW" type="truck" route="route_EW" begin="0" end="3600" vehsPerHour="24" departLane="best" departSpeed="max"/>
+    <flow id="truck_WE" type="truck" route="route_WE" begin="0" end="3600" vehsPerHour="24" departLane="best" departSpeed="max"/>
+
+</routes>

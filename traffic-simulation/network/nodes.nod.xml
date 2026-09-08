@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    nodes.nod.xml – Định nghĩa các nút giao thông
+    Mô hình: Ngã tư bốn hướng (North, South, East, West) với nút trung tâm C
+
+                   NORTH (N)
+                     │  250m
+                     │
+    WEST (W) ────── C ────── EAST (E)
+              250m  │  250m
+                    │  250m
+                   SOUTH (S)
+
+    C: Nút giao có đèn tín hiệu (traffic light)
+-->
+<nodes>
+    <!-- Nút trung tâm (ngã tư) – có đèn tín hiệu -->
+    <node id="C" x="0"    y="0"    type="traffic_light"/>
+
+    <!-- Các nút đầu cuối của 4 hướng -->
+    <node id="N" x="0"    y="250"  type="priority"/>
+    <node id="S" x="0"    y="-250" type="priority"/>
+    <node id="E" x="250"  y="0"    type="priority"/>
+    <node id="W" x="-250" y="0"    type="priority"/>
+</nodes>

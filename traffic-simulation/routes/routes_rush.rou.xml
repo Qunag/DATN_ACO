@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    routes_rush.rou.xml – Mức 1: Lưu lượng biến thiên theo thời gian (giờ cao điểm)
+    =================================================================================
+    Mô phỏng một ngày làm việc rút gọn (3600 giây = 6 giờ thực):
+
+    Giai đoạn 1 (0–600s)    : Sáng sớm – lưu lượng thấp (200 xe/h)
+    Giai đoạn 2 (600–1200s) : Cao điểm sáng – đổ vào trung tâm (1200 xe/h N→S,S→N)
+    Giai đoạn 3 (1200–2100s): Bình thường ban ngày (400 xe/h)
+    Giai đoạn 4 (2100–2700s): Cao điểm chiều – đổ ra ngoại ô (1000 xe/h E→W,W→E)
+    Giai đoạn 5 (2700–3600s): Tối – lưu lượng thấp (150 xe/h)
+
+    Mục tiêu: Tạo "sóng ùn tắc" – ACO phải thích nghi liên tục theo thời gian.
+-->
+<routes>
+    <vType id="car" vClass="passenger" length="4.5" minGap="2.5"
+           maxSpeed="13.89" accel="2.6" decel="4.5" sigma="0.5" color="0.2,0.6,1.0"/>
+
+    <route id="route_NS" edges="N2C C2S"/>
+    <route id="route_SN" edges="S2C C2N"/>
+    <route id="route_EW" edges="E2C C2W"/>
+    <route id="route_WE" edges="W2C C2E"/>
+
+    <!-- ═══════════════════════════════════════════════
+         GIAI ĐOẠN 1: Sáng sớm (0 – 600s) – 200 xe/h
+         ═══════════════════════════════════════════════ -->
+    <flow id="rush_NS_g1" type="car" route="route_NS" begin="0"   end="600"  vehsPerHour="200" departLane="best" departSpeed="max"/>
+    <flow id="rush_SN_g1" type="car" route="route_SN" begin="0"   end="600"  vehsPerHour="200" departLane="best" departSpeed="max"/>
+    <flow id="rush_EW_g1" type="car" route="route_EW" begin="0"   end="600"  vehsPerHour="200" departLane="best" departSpeed="max"/>
+    <flow id="rush_WE_g1" type="car" route="route_WE" begin="0"   end="600"  vehsPerHour="200" departLane="best" departSpeed="max"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         GIAI ĐOẠN 2: Cao điểm sáng (600 – 1200s)
+         Hướng Bắc–Nam (vào trung tâm) tăng mạnh, Đông–Tây tăng vừa
+         ═══════════════════════════════════════════════════════════════════ -->
+    <flow id="rush_NS_g2" type="car" route="route_NS" begin="600"  end="1200" vehsPerHour="1200" departLane="best" departSpeed="max"/>
+    <flow id="rush_SN_g2" type="car" route="route_SN" begin="600"  end="1200" vehsPerHour="1200" departLane="best" departSpeed="max"/>
+    <flow id="rush_EW_g2" type="car" route="route_EW" begin="600"  end="1200" vehsPerHour="600"  departLane="best" departSpeed="max"/>
+    <flow id="rush_WE_g2" type="car" route="route_WE" begin="600"  end="1200" vehsPerHour="600"  departLane="best" departSpeed="max"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         GIAI ĐOẠN 3: Bình thường ban ngày (1200 – 2100s) – 400 xe/h
+         ═══════════════════════════════════════════════════════════════════ -->
+    <flow id="rush_NS_g3" type="car" route="route_NS" begin="1200" end="2100" vehsPerHour="400" departLane="best" departSpeed="max"/>
+    <flow id="rush_SN_g3" type="car" route="route_SN" begin="1200" end="2100" vehsPerHour="400" departLane="best" departSpeed="max"/>
+    <flow id="rush_EW_g3" type="car" route="route_EW" begin="1200" end="2100" vehsPerHour="400" departLane="best" departSpeed="max"/>
+    <flow id="rush_WE_g3" type="car" route="route_WE" begin="1200" end="2100" vehsPerHour="400" departLane="best" departSpeed="max"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         GIAI ĐOẠN 4: Cao điểm chiều (2100 – 2700s)
+         Hướng Đông–Tây (ra ngoại ô) tăng mạnh
+         ═══════════════════════════════════════════════════════════════════ -->
+    <flow id="rush_NS_g4" type="car" route="route_NS" begin="2100" end="2700" vehsPerHour="600"  departLane="best" departSpeed="max"/>
+    <flow id="rush_SN_g4" type="car" route="route_SN" begin="2100" end="2700" vehsPerHour="600"  departLane="best" departSpeed="max"/>
+    <flow id="rush_EW_g4" type="car" route="route_EW" begin="2100" end="2700" vehsPerHour="1000" departLane="best" departSpeed="max"/>
+    <flow id="rush_WE_g4" type="car" route="route_WE" begin="2100" end="2700" vehsPerHour="1000" departLane="best" departSpeed="max"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         GIAI ĐOẠN 5: Tối (2700 – 3600s) – 150 xe/h
+         ═══════════════════════════════════════════════════════════════════ -->
+    <flow id="rush_NS_g5" type="car" route="route_NS" begin="2700" end="3600" vehsPerHour="150" departLane="best" departSpeed="max"/>
+    <flow id="rush_SN_g5" type="car" route="route_SN" begin="2700" end="3600" vehsPerHour="150" departLane="best" departSpeed="max"/>
+    <flow id="rush_EW_g5" type="car" route="route_EW" begin="2700" end="3600" vehsPerHour="150" departLane="best" departSpeed="max"/>
+    <flow id="rush_WE_g5" type="car" route="route_WE" begin="2700" end="3600" vehsPerHour="150" departLane="best" departSpeed="max"/>
+</routes>

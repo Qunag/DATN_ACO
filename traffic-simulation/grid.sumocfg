@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- grid.sumocfg - Config SUMO cho mang luoi 3x3 -->
+<configuration>
+    <input>
+        <net-file value="network/grid_net.xml"/>
+        <route-files value="routes/grid_routes.rou.xml"/>
+    </input>
+    <output>
+        <tripinfo-output value="output/tripinfo_grid.xml"/>
+        <summary-output value="output/summary_grid.xml"/>
+    </output>
+    <time>
+        <begin value="0"/>
+        <end value="3600"/>
+        <step-length value="1"/>
+    </time>
+    <processing>
+        <waiting-time-memory value="100"/>
+        <time-to-teleport value="-1"/>
+    </processing>
+    <report>
+        <verbose value="false"/>
+        <no-step-log value="true"/>
+    </report>
+</configuration>

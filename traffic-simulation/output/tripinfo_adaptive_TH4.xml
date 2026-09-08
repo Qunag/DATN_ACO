@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-08-27T16:15:51.872688+07:00 by Eclipse SUMO GUI 1.27.1
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="D:\study\DATN\traffic-simulation\network/intersection.net.xml"/>
+        <route-files value="D:\study\DATN\traffic-simulation\routes\routes_TH4.rou.xml"/>
+    </input>
+
+    <output>
+        <summary-output value="D:\study\DATN\traffic-simulation\output/summary.xml"/>
+        <tripinfo-output value="D:\study\DATN\traffic-simulation\output\tripinfo_adaptive_TH4.xml"/>
+        <statistic-output value="D:\study\DATN\traffic-simulation\output/statistics.xml"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="3600"/>
+        <step-length value="1"/>
+    </time>
+
+    <processing>
+        <time-to-teleport value="-1"/>
+        <waiting-time-memory value="100"/>
+    </processing>
+
+    <report>
+        <verbose value="false"/>
+        <no-warnings value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <traci_server>
+        <remote-port value="62467"/>
+    </traci_server>
+
+</sumoConfiguration>
+-->
+
+<tripinfos xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/tripinfo_file.xsd">
+</tripinfos>
