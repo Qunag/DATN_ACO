@@ -193,14 +193,47 @@ Tổng chu kỳ: 66 giây
 
 ---
 
-## Kết nối với ACO (Giai đoạn 2)
+## ACO Routing Engine (Giai đoạn 3)
 
-Dữ liệu thu thập từ giai đoạn này sẽ được chuyển thành:
+### Kiến trúc
+
+```
+SUMO → TraCI → TrafficGraph → ACO / Dijkstra / A* → Best Route → TraCI → SUMO Vehicle
+```
+
+### Scripts mới
+
+| Script | Vai trò |
+|---|---|
+| `scripts/aco.py` | ACO core: TrafficGraph + AntColonyOptimizer |
+| `scripts/routing.py` | Dijkstra (3 modes) + A* + so sánh |
+| `scripts/aco_runner.py` | Chạy ACO + SUMO, dynamic rerouting |
+| `scripts/compare_algorithms.py` | So sánh tất cả thuật toán |
+
+### Chạy nhanh
+
+```powershell
+# Self-test (không cần SUMO)
+python scripts/aco.py --test
+python scripts/routing.py --test
+
+# Chạy ACO trên SUMO
+python scripts/aco_runner.py --nogui --duration 600
+
+# So sánh thuật toán
+python scripts/compare_algorithms.py --nogui --duration 600
+```
+
+### Hàm chi phí cạnh động
+
+$$C_{ij}(t) = w_d \cdot D_{norm} + w_t \cdot T_{norm} + w_q \cdot Q_{norm} + w_w \cdot W_{norm}$$
+
+### Heuristic ACO
 
 $$\eta_{ij}(t) = \frac{1}{C_{ij}(t) + \varepsilon}$$
 
-Phục vụ cho giải thuật ACO ở giai đoạn tiếp theo.
+### Xác suất chọn cạnh
 
-```
-SUMO → TraCI → Traffic Data → Edge Cost → ACO → Best Route → TraCI → SUMO Vehicle
-```
+$$P_{ij}^{k} = \frac{\tau_{ij}^{\alpha} \cdot \eta_{ij}^{\beta}}{\sum_{l \in N_i^k} \tau_{il}^{\alpha} \cdot \eta_{il}^{\beta}}$$
+
+Chi tiết: xem [Báo cáo 3](../BÁO%20CÁO%203%20–%20TÍCH%20HỢP%20GIẢI%20THUẬT%20ĐÀN%20KIẾN%20VÀO%20MÔ%20HÌNH%20MÔ%20PHỎNG%20SUMO.md)
