@@ -13,7 +13,7 @@ Sử dụng:
 import subprocess, sys, os
 from pathlib import Path
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 NETWORK_DIR = PROJECT_DIR / "network"
 
 def get_netconvert():

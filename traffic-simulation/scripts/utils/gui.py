@@ -21,7 +21,7 @@ Sử dụng:
 import os, sys, subprocess, argparse
 from pathlib import Path
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 
 # ─── Tìm SUMO ─────────────────────────────────────────────────────
 def get_sumo_home():
@@ -159,12 +159,12 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Vi du:
-  python scripts/gui.py                    # Nga tu TH3
-  python scripts/gui.py --scenario TH5    # Nga tu 1000 xe/h
-  python scripts/gui.py --scenario rush   # Gio cao diem
-  python scripts/gui.py --scenario mixed  # Hon hop xe may/o to/bus
-  python scripts/gui.py --network grid    # Mang luoi 3x3
-  python scripts/gui.py --osm             # OSM Web Wizard (ban do thuc te)
+  python -m scripts.utils.gui                    # Nga tu TH3
+  python -m scripts.utils.gui --scenario TH5    # Nga tu 1000 xe/h
+  python -m scripts.utils.gui --scenario rush   # Gio cao diem
+  python -m scripts.utils.gui --scenario mixed  # Hon hop xe may/o to/bus
+  python -m scripts.utils.gui --network grid    # Mang luoi 3x3
+  python -m scripts.utils.gui --osm             # OSM Web Wizard (ban do thuc te)
         """
     )
     g = p.add_mutually_exclusive_group()

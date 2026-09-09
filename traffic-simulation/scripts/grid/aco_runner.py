@@ -42,16 +42,27 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
 # Đường dẫn
 # ─────────────────────────────────────────────────────────────────
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
-SCRIPTS_DIR = Path(__file__).parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
+SCRIPTS_DIR = PROJECT_DIR / "scripts"
 
-# Thêm scripts vào path để import aco, routing
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
+if str(PROJECT_DIR) not in sys.path:
+    sys.path.insert(0, str(PROJECT_DIR))
 
-from aco import TrafficGraph, AntColonyOptimizer, GRID_ADJACENCY
-from routing import (dijkstra_static, dijkstra_traffic, dijkstra_dynamic,
-                     astar, print_comparison_table)
+try:
+    from scripts.core.aco import TrafficGraph, AntColonyOptimizer, GRID_ADJACENCY
+    from scripts.core.routing import (dijkstra_static, dijkstra_traffic, dijkstra_dynamic,
+                                     astar, print_comparison_table)
+except ImportError:
+    try:
+        from core.aco import TrafficGraph, AntColonyOptimizer, GRID_ADJACENCY
+        from core.routing import (dijkstra_static, dijkstra_traffic, dijkstra_dynamic,
+                                  astar, print_comparison_table)
+    except ImportError:
+        from aco import TrafficGraph, AntColonyOptimizer, GRID_ADJACENCY
+        from routing import (dijkstra_static, dijkstra_traffic, dijkstra_dynamic,
+                             astar, print_comparison_table)
 
 
 # ─────────────────────────────────────────────────────────────────

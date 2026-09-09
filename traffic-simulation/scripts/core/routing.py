@@ -35,15 +35,21 @@ import importlib.util
 
 # Hỗ trợ import khi chạy trực tiếp hoặc import từ package
 try:
-    from aco import TrafficGraph, NODE_COORDS, GRID_ADJACENCY
-except ImportError:
-    _script_dir = Path(__file__).parent
-    _spec = importlib.util.spec_from_file_location("aco", _script_dir / "aco.py")
-    _mod = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(_mod)
-    TrafficGraph = _mod.TrafficGraph
-    NODE_COORDS = _mod.NODE_COORDS
-    GRID_ADJACENCY = _mod.GRID_ADJACENCY
+    from .aco import TrafficGraph, NODE_COORDS, GRID_ADJACENCY
+except (ImportError, ValueError):
+    try:
+        from scripts.core.aco import TrafficGraph, NODE_COORDS, GRID_ADJACENCY
+    except ImportError:
+        try:
+            from aco import TrafficGraph, NODE_COORDS, GRID_ADJACENCY
+        except ImportError:
+            _script_dir = Path(__file__).parent
+            _spec = importlib.util.spec_from_file_location("aco", _script_dir / "aco.py")
+            _mod = importlib.util.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)
+            TrafficGraph = _mod.TrafficGraph
+            NODE_COORDS = _mod.NODE_COORDS
+            GRID_ADJACENCY = _mod.GRID_ADJACENCY
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -250,12 +256,18 @@ def run_all_algorithms(graph: TrafficGraph, source: str, target: str,
     """
     # Import ACO
     try:
-        from aco import AntColonyOptimizer
-    except ImportError:
-        _spec = importlib.util.spec_from_file_location("aco", Path(__file__).parent / "aco.py")
-        _mod = importlib.util.module_from_spec(_spec)
-        _spec.loader.exec_module(_mod)
-        AntColonyOptimizer = _mod.AntColonyOptimizer
+        from .aco import AntColonyOptimizer
+    except (ImportError, ValueError):
+        try:
+            from scripts.core.aco import AntColonyOptimizer
+        except ImportError:
+            try:
+                from aco import AntColonyOptimizer
+            except ImportError:
+                _spec = importlib.util.spec_from_file_location("aco", Path(__file__).parent / "aco.py")
+                _mod = importlib.util.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                AntColonyOptimizer = _mod.AntColonyOptimizer
 
     if aco_params is None:
         aco_params = {}
@@ -422,4 +434,5 @@ if __name__ == "__main__":
     if args.test:
         run_self_test()
     else:
-        print("Sử dụng: python scripts/routing.py --test")
+        print("Sử dụng: python -m scripts.core.routing --test")
+        print("Hoặc:    python scripts/core/routing.py --test")

@@ -42,7 +42,7 @@ from typing import Dict, List, Tuple
 # Cấu hình đường dẫn
 # ─────────────────────────────────────────────────────────────────
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Thêm thư mục tools của SUMO vào sys.path để import traci
 def setup_sumo_path():

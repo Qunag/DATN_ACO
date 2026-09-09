@@ -28,32 +28,52 @@ WEST (W) ────── C ────── EAST (E)
 ```
 traffic-simulation/
 │
-├── network/
-│   ├── nodes.nod.xml          # 5 node: N, S, E, W, C
-│   ├── edges.edg.xml          # 8 edges hai chiều
-│   └── intersection.net.xml   # BUILD bằng build_network.py
+├── network/                         # Mạng đường
+│   ├── nodes.nod.xml                # 5 node: N, S, E, W, C
+│   ├── edges.edg.xml                # 8 edges hai chiều
+│   ├── intersection.net.xml         # Mạng ngã tư
+│   └── grid_net.xml                 # Mạng lưới 3×3
 │
-├── routes/
-│   ├── routes_TH1.rou.xml     # 200  xe/h/hướng
-│   ├── routes_TH2.rou.xml     # 400  xe/h/hướng
-│   ├── routes_TH3.rou.xml     # 600  xe/h/hướng
-│   ├── routes_TH4.rou.xml     # 800  xe/h/hướng
-│   ├── routes_TH5.rou.xml     # 1000 xe/h/hướng
-│   └── routes_TH6.rou.xml     # 1200 xe/h/hướng
+├── routes/                          # File sinh lưu lượng xe
+│   ├── routes_TH1–TH6.rou.xml       # Kịch bản ngã tư (200-1200 xe/h)
+│   └── grid_routes.rou.xml          # Kịch bản mạng 3×3
 │
-├── output/                    # Được tạo khi chạy
-│   ├── traffic_TH1.csv        # Dữ liệu TraCI theo thời gian
-│   ├── tripinfo_TH1.xml       # SUMO TripInfo output
-│   ├── comparison.csv         # Bảng so sánh 6 kịch bản
-│   └── analysis_results.csv   # Kết quả phân tích tổng hợp
+├── osm/                             # Bản đồ thực tế (OpenStreetMap)
+│   ├── map2.osm                     # File bản đồ OSM thô
+│   ├── map2.net.xml                 # Mạng SUMO (619 nodes, 1163 edges)
+│   ├── map2.rou.xml                 # Lộ trình xe thực tế
+│   └── map2.sumocfg                 # Cấu hình chạy SUMO trên map OSM
 │
-├── scripts/
-│   ├── build_network.py       # Build intersection.net.xml
-│   ├── monitor.py             # TraCI data collector
-│   ├── run_experiments.py     # Chạy batch 6 thí nghiệm
-│   └── analyze.py             # Phân tích kết quả
+├── output/                          # Kết quả mô phỏng và log
+│   ├── traffic_TH*.csv              # Dữ liệu TraCI theo thời gian
+│   ├── tripinfo_*.xml               # Thống kê từng chuyến đi
+│   └── comparison.csv               # Bảng so sánh
 │
-└── intersection.sumocfg       # Cấu hình SUMO chính
+└── scripts/                         # Mã nguồn Python (tổ chức theo nhóm)
+    ├── core/                        # ⭐ Module lõi (thuật toán dùng chung)
+    │   ├── aco.py                   # TrafficGraph + AntColonyOptimizer
+    │   ├── routing.py               # Dijkstra (3 modes) + A*
+    │   └── osm_graph.py             # OSMTrafficGraph cho bản đồ OSM
+    │
+    ├── grid/                        # 🔲 Mạng 3×3 nhân tạo
+    │   ├── build_network.py         # Build intersection.net.xml
+    │   ├── build_grid.py            # Build grid 3×3
+    │   ├── aco_runner.py            # ACO + SUMO trên grid
+    │   └── compare_algorithms.py    # So sánh thuật toán trên grid
+    │
+    ├── osm/                         # 🗺️ Bản đồ thực tế
+    │   ├── osm_setup.py             # Hỗ trợ tải/convert OSM
+    │   └── osm_runner.py            # ACO + SUMO trên map OSM
+    │
+    ├── experiments/                 # 🧪 Thí nghiệm & phân tích
+    │   ├── monitor.py               # TraCI data collector
+    │   ├── run_experiments.py       # Batch 6 kịch bản TH1–TH6
+    │   ├── incident_monitor.py      # Giả lập sự cố ùn tắc bất ngờ
+    │   ├── adaptive_monitor.py      # Điều khiển đèn thích nghi
+    │   └── analyze.py               # Phân tích & vẽ biểu đồ
+    │
+    └── utils/                       # 🔧 Tiện ích
+        └── gui.py                   # Trình mở SUMO-GUI
 ```
 
 ---
@@ -86,42 +106,41 @@ $env:SUMO_HOME = "C:\Program Files (x86)\Eclipse\Sumo"
 Chạy **một lần duy nhất** để tạo `network/intersection.net.xml`:
 
 ```powershell
-cd d:\study\DATN\traffic-simulation
-python scripts/build_network.py
+python -m scripts.grid.build_network
 ```
 
 ### Bước 2: Chạy một kịch bản (có GUI)
 
 ```powershell
-python scripts/monitor.py --scenario TH3
+python -m scripts.experiments.monitor --scenario TH3
 ```
 
 ### Bước 3: Chạy một kịch bản (không GUI, nhanh hơn)
 
 ```powershell
-python scripts/monitor.py --scenario TH3 --nogui
+python -m scripts.experiments.monitor --scenario TH3 --nogui
 ```
 
 ### Bước 4: Chạy tất cả 6 thí nghiệm
 
 ```powershell
-python scripts/run_experiments.py
+python -m scripts.experiments.run_experiments
 ```
 
 Chạy một số kịch bản nhất định:
 
 ```powershell
-python scripts/run_experiments.py --scenarios TH3 TH4 TH5
+python -m scripts.experiments.run_experiments --scenarios TH3 TH4 TH5
 ```
 
 ### Bước 5: Phân tích kết quả
 
 ```powershell
-python scripts/analyze.py
+python -m scripts.experiments.analyze
 
 # Kèm biểu đồ (cần matplotlib):
 pip install matplotlib
-python scripts/analyze.py --plot
+python -m scripts.experiments.analyze --plot
 ```
 
 ---
@@ -201,27 +220,27 @@ Tổng chu kỳ: 66 giây
 SUMO → TraCI → TrafficGraph → ACO / Dijkstra / A* → Best Route → TraCI → SUMO Vehicle
 ```
 
-### Scripts mới
+### Scripts
 
 | Script | Vai trò |
 |---|---|
-| `scripts/aco.py` | ACO core: TrafficGraph + AntColonyOptimizer |
-| `scripts/routing.py` | Dijkstra (3 modes) + A* + so sánh |
-| `scripts/aco_runner.py` | Chạy ACO + SUMO, dynamic rerouting |
-| `scripts/compare_algorithms.py` | So sánh tất cả thuật toán |
+| `scripts/core/aco.py` | ACO core: TrafficGraph + AntColonyOptimizer |
+| `scripts/core/routing.py` | Dijkstra (3 modes) + A* + so sánh |
+| `scripts/grid/aco_runner.py` | Chạy ACO + SUMO, dynamic rerouting |
+| `scripts/grid/compare_algorithms.py` | So sánh tất cả thuật toán trên mạng 3×3 |
 
 ### Chạy nhanh
 
 ```powershell
 # Self-test (không cần SUMO)
-python scripts/aco.py --test
-python scripts/routing.py --test
+python -m scripts.core.aco --test
+python -m scripts.core.routing --test
 
 # Chạy ACO trên SUMO
-python scripts/aco_runner.py --nogui --duration 600
+python -m scripts.grid.aco_runner --nogui --duration 600
 
 # So sánh thuật toán
-python scripts/compare_algorithms.py --nogui --duration 600
+python -m scripts.grid.compare_algorithms --nogui --duration 600
 ```
 
 ### Hàm chi phí cạnh động
@@ -237,3 +256,61 @@ $$\eta_{ij}(t) = \frac{1}{C_{ij}(t) + \varepsilon}$$
 $$P_{ij}^{k} = \frac{\tau_{ij}^{\alpha} \cdot \eta_{ij}^{\beta}}{\sum_{l \in N_i^k} \tau_{il}^{\alpha} \cdot \eta_{il}^{\beta}}$$
 
 Chi tiết: xem [Báo cáo 3](../BÁO%20CÁO%203%20–%20TÍCH%20HỢP%20GIẢI%20THUẬT%20ĐÀN%20KIẾN%20VÀO%20MÔ%20HÌNH%20MÔ%20PHỎNG%20SUMO.md)
+
+---
+
+## ACO trên bản đồ thực tế – OSM (Giai đoạn 4)
+
+### Mục tiêu
+
+Chạy ACO trên bản đồ thực (OpenStreetMap) với hàng trăm nút giao,
+thay vì mạng 3×3 nhân tạo, để đánh giá scalability.
+
+### Mạng đường map2
+
+- **Nguồn**: OpenStreetMap (Hà Nội)
+- **Quy mô**: ~619 nút giao, ~1163 cạnh (gấp ~69× so với mạng 3×3)
+- **20 nút giao** có đèn tín hiệu
+- Bounding box: `105.80°–105.85°E, 20.96°–21.05°N`
+
+### Scripts
+
+| Script | Vai trò |
+|---|---|
+| `scripts/core/osm_graph.py` | OSMTrafficGraph: parse net.xml, ACO + Dijkstra cho mạng OSM |
+| `scripts/osm/osm_runner.py` | Chạy so sánh + dynamic rerouting trên bản đồ OSM |
+| `scripts/osm/osm_setup.py` | Tiện ích tải và cấu hình OSM |
+
+### ACO cải tiến cho mạng lớn
+
+Trên mạng thực (600+ nút), ACO cơ bản không hoạt động vì kiến bị lạc.
+Các cải tiến:
+
+1. **Directional heuristic (γ)** – Thêm thành phần hướng đích:
+
+$$P_{ij}^{k} = \frac{\tau_{ij}^{\alpha} \cdot \eta_{ij}^{\beta} \cdot \delta_{ij}^{\gamma}}{\sum_{l \in N_i^k} \tau_{il}^{\alpha} \cdot \eta_{il}^{\beta} \cdot \delta_{il}^{\gamma}}$$
+
+Trong đó $\delta_{ij} = \frac{1}{dist(j, dest) + \varepsilon}$
+
+2. **Dijkstra seed** – Khởi tạo pheromone từ đường Dijkstra, kiến có "bản đồ sơ bộ"
+
+3. **Dead-end avoidance** – Ưu tiên nút có nhiều kết nối, tránh ngõ cụt
+
+### Chạy nhanh
+
+```powershell
+# Self-test (không cần SUMO)
+python -m scripts.core.osm_graph --test
+
+# Xem thông tin mạng
+python -m scripts.core.osm_graph --info
+
+# So sánh thuật toán trên map OSM
+python -m scripts.osm.osm_runner --nogui --mode compare --duration 600
+
+# Dynamic rerouting ACO trên map OSM
+python -m scripts.osm.osm_runner --nogui --mode reroute --duration 600
+
+# Tùy chỉnh ACO
+python -m scripts.osm.osm_runner --nogui --mode compare --n-ants 50 --iterations 100
+```

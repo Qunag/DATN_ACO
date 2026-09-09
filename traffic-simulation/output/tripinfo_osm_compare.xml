@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-09-08T19:49:36.311276+07:00 by Eclipse SUMO sumo 1.27.1
+<!-- generated on 2026-09-08T19:49:45.240888+07:00 by Eclipse SUMO sumo 1.27.1
 <sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
-        <net-file value="D:\study\DATN\traffic-simulation\network/grid_net.xml"/>
-        <route-files value="D:\study\DATN\traffic-simulation\routes/grid_routes.rou.xml"/>
+        <net-file value="D:\study\DATN\traffic-simulation\osm\map2.net.xml"/>
+        <route-files value="D:\study\DATN\traffic-simulation\osm\map2.rou.xml"/>
     </input>
 
     <output>
-        <summary-output value="D:\study\DATN\traffic-simulation\output/summary_grid.xml"/>
-        <tripinfo-output value="D:\study\DATN\traffic-simulation\output\tripinfo_compare.xml"/>
+        <tripinfo-output value="D:\study\DATN\traffic-simulation\output\tripinfo_osm_compare.xml"/>
     </output>
 
     <time>
@@ -20,18 +19,17 @@
     </time>
 
     <processing>
-        <time-to-teleport value="-1"/>
-        <waiting-time-memory value="100"/>
+        <ignore-route-errors value="true"/>
+        <time-to-teleport value="300"/>
     </processing>
 
     <report>
-        <verbose value="false"/>
         <no-warnings value="true"/>
         <no-step-log value="true"/>
     </report>
 
     <traci_server>
-        <remote-port value="62725"/>
+        <remote-port value="62733"/>
     </traci_server>
 
 </sumoConfiguration>

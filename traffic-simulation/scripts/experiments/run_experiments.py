@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys, io
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 """
 run_experiments.py – Chạy tuần tự 6 thí nghiệm TH1–TH6
 =========================================================
@@ -30,9 +34,24 @@ from pathlib import Path
 from typing import List, Dict, Optional
 
 
-# Thêm thư mục scripts vào path để import monitor
-sys.path.insert(0, str(Path(__file__).parent))
-from monitor import run_simulation, _scenario_demand, setup_sumo_path
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
+SCRIPTS_DIR = PROJECT_DIR / "scripts"
+EXP_DIR = Path(__file__).resolve().parent
+
+if str(EXP_DIR) not in sys.path:
+    sys.path.insert(0, str(EXP_DIR))
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+if str(PROJECT_DIR) not in sys.path:
+    sys.path.insert(0, str(PROJECT_DIR))
+
+try:
+    from scripts.experiments.monitor import run_simulation, _scenario_demand, setup_sumo_path
+except ImportError:
+    try:
+        from experiments.monitor import run_simulation, _scenario_demand, setup_sumo_path
+    except ImportError:
+        from monitor import run_simulation, _scenario_demand, setup_sumo_path
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -41,7 +60,6 @@ from monitor import run_simulation, _scenario_demand, setup_sumo_path
 
 ALL_SCENARIOS = ["TH1", "TH2", "TH3", "TH4", "TH5", "TH6"]
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
 OUTPUT_DIR  = PROJECT_DIR / "output"
 
 

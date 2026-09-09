@@ -672,5 +672,6 @@ if __name__ == "__main__":
     if args.test:
         run_self_test()
     else:
-        print("Sử dụng: python scripts/aco.py --test")
-        print("Hoặc import module: from aco import TrafficGraph, AntColonyOptimizer")
+        print("Sử dụng: python -m scripts.core.aco --test")
+        print("Hoặc:    python scripts/core/aco.py --test")
+        print("Import:  from scripts.core.aco import TrafficGraph, AntColonyOptimizer")

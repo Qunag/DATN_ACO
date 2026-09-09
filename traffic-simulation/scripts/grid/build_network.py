@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys, io
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 """
 build_network.py – Tự động build file mạng SUMO (intersection.net.xml)
 ========================================================================
@@ -22,8 +26,8 @@ from pathlib import Path
 # Cấu hình đường dẫn
 # ─────────────────────────────────────────────────────────────────
 
-# Thư mục gốc của project (thư mục chứa script này là scripts/)
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
+# Thư mục gốc của project
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 NETWORK_DIR = PROJECT_DIR / "network"
 
 NODES_FILE  = NETWORK_DIR / "nodes.nod.xml"

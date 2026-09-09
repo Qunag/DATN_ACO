@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Dict, List
 
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 
 # ─── Thiết lập SUMO ───────────────────────────────────────────────
 def setup_sumo():

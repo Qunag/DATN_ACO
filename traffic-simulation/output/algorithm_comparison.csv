@@ -1,25 +1,7 @@
 snapshot_time,algorithm,path_str,cost,time_ms
-100,Dijkstra (static),A → B → C → F → I,2000.0,0.042
-100,Dijkstra (traffic),A → B → E → F → I,146.989045,0.02
-100,Dijkstra (dynamic),A → D → E → F → I,1.224226,0.031
-100,A*,A → B → E → F → I,2000.0,0.026
-100,ACO (basic),A → D → E → F → I,1.224226,12.976
-100,ACO (traffic-aware),A → D → E → F → I,1.224226,13.367
-200,Dijkstra (static),A → B → C → F → I,2000.0,0.027
-200,Dijkstra (traffic),A → D → E → F → I,148.02009,0.015
-200,Dijkstra (dynamic),A → D → E → F → I,1.21205,0.026
-200,A*,A → B → E → F → I,2000.0,0.021
-200,ACO (basic),A → D → E → F → I,1.21205,12.028
-200,ACO (traffic-aware),A → D → E → F → I,1.21205,12.567
-300,Dijkstra (static),A → B → C → F → I,2000.0,0.028
-300,Dijkstra (traffic),A → B → E → F → I,147.244873,0.018
-300,Dijkstra (dynamic),A → D → G → H → I,1.240309,0.026
-300,A*,A → B → E → F → I,2000.0,0.02
-300,ACO (basic),A → D → G → H → I,1.240309,12.516
-300,ACO (traffic-aware),A → D → G → H → I,1.240309,12.806
-500,Dijkstra (static),A → B → C → F → I,2000.0,0.028
-500,Dijkstra (traffic),A → B → E → F → I,153.851064,0.016
-500,Dijkstra (dynamic),A → B → E → F → I,1.274628,0.025
-500,A*,A → B → E → F → I,2000.0,0.02
-500,ACO (basic),A → B → E → F → I,1.274628,13.05
-500,ACO (traffic-aware),A → B → E → F → I,1.274628,12.644
+60,Dijkstra (static),A → B → C → F → I,2000.0,0.032
+60,Dijkstra (traffic),A → D → E → F → I,161.978294,0.018
+60,Dijkstra (dynamic),A → D → E → F → I,1.266946,0.026
+60,A*,A → B → E → F → I,2000.0,0.027
+60,ACO (basic),A → D → E → H → I,1.266946,12.517
+60,ACO (traffic-aware),A → D → E → F → I,1.266946,12.494

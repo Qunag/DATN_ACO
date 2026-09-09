@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys, io
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 """
 analyze.py – Phân tích kết quả sau mô phỏng SUMO
 ==================================================
@@ -34,7 +38,7 @@ from typing import Dict, List, Optional
 # Cấu hình đường dẫn
 # ─────────────────────────────────────────────────────────────────
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 OUTPUT_DIR  = PROJECT_DIR / "output"
 
 ALL_SCENARIOS = ["TH1", "TH2", "TH3", "TH4", "TH5", "TH6"]

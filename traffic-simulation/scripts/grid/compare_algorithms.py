@@ -41,15 +41,28 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
 # Đường dẫn
 # ─────────────────────────────────────────────────────────────────
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
-SCRIPTS_DIR = Path(__file__).parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
+SCRIPTS_DIR = PROJECT_DIR / "scripts"
 
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
+if str(PROJECT_DIR) not in sys.path:
+    sys.path.insert(0, str(PROJECT_DIR))
 
-from aco import TrafficGraph, AntColonyOptimizer, GRID_ADJACENCY
-from routing import (run_all_algorithms, print_comparison_table,
-                     dijkstra_static, dijkstra_traffic, dijkstra_dynamic, astar)
+try:
+    from scripts.core.aco import TrafficGraph, AntColonyOptimizer, GRID_ADJACENCY
+    from scripts.core.routing import (run_all_algorithms, print_comparison_table,
+                                     dijkstra_static, dijkstra_traffic, dijkstra_dynamic, astar)
+except ImportError:
+    try:
+        from core.aco import TrafficGraph, AntColonyOptimizer, GRID_ADJACENCY
+        from core.routing import (run_all_algorithms, print_comparison_table,
+                                  dijkstra_static, dijkstra_traffic, dijkstra_dynamic, astar)
+    except ImportError:
+        from aco import TrafficGraph, AntColonyOptimizer, GRID_ADJACENCY
+        from routing import (run_all_algorithms, print_comparison_table,
+                             dijkstra_static, dijkstra_traffic, dijkstra_dynamic, astar)
+
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -258,9 +271,9 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Ví dụ:
-  python scripts/compare_algorithms.py --nogui --duration 600
-  python scripts/compare_algorithms.py --snapshot-at 100 200 300 500
-  python scripts/compare_algorithms.py --origin C --dest G
+  python -m scripts.grid.compare_algorithms --nogui --duration 600
+  python -m scripts.grid.compare_algorithms --snapshot-at 100 200 300 500
+  python -m scripts.grid.compare_algorithms --origin C --dest G
         """
     )
     parser.add_argument("--nogui", action="store_true",

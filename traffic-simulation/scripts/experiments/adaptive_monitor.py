@@ -27,7 +27,7 @@ Sử dụng:
 import os, csv, time, argparse
 from pathlib import Path
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 
 # ─── Tham số đèn thích nghi ───────────────────────────────────────
 TLS_NODE       = "C"          # ID nút giao có đèn

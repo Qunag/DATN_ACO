@@ -33,7 +33,7 @@ Sử dụng:
 import os, sys, subprocess, argparse, webbrowser
 from pathlib import Path
 
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 OSM_DIR = PROJECT_DIR / "osm"
 
 # Bounding box cho một phần Hà Đông, Hà Nội
