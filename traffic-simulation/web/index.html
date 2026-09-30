@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Phỏng Giao Thông Google Maps – Kết Hợp Mô Hình SUMO TraCI & Giải Thuật Đàn Kiến (ACO)</title>
+    <meta name="description" content="Mô phỏng tình trạng giao thông đa sắc màu (Xanh, Vàng, Đỏ) như Google Maps kết hợp công thức ùn tắc SUMO TraCI và giải thuật Đàn Kiến (ACO) né kẹt xe.">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- File Style chính -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         1. THANH TIÊU ĐỀ (TOP NAVBAR)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <header class="top-navbar">
+        <div class="brand">
+            <div class="brand-icon">🐜</div>
+            <div class="brand-text">
+                <h1>ACO TRAFFIC NAVIGATION • GOOGLE MAPS & SUMO</h1>
+                <p>Mô Phỏng Lưu Lượng Đa Sắc Màu (Xanh/Vàng/Đỏ) • Đề Tài Tốt Nghiệp</p>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-outline btn-map-layer active" data-layer="google_roadmap" title="Google Maps Đường phố chuẩn">
+                🗺️ Google Maps
+            </button>
+            <button class="btn btn-outline btn-map-layer" data-layer="google_hybrid" title="Google Maps Vệ tinh kèm tên đường">
+                🛰️ Vệ Tinh Lai
+            </button>
+            <button class="btn btn-outline btn-map-layer" data-layer="its_dark" title="Chế độ ITS Dark Cyberpunk">
+                🌙 ITS Dark
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         2. KHÔNG GIAN BẢN ĐỒ VÀ BẢNG ĐIỀU KHIỂN
+         ═══════════════════════════════════════════════════════════════════ -->
+    <main class="workspace">
+        <!-- Vùng hiển thị Google Maps -->
+        <div id="map-container"></div>
+
+        <!-- Sidebar điều khiển tương tác tự do bên trái -->
+        <aside class="floating-sidebar">
+            <div class="sidebar-title">
+                <span>🎮</span> Bảng Điều Khiển Tương Tác
+            </div>
+
+            <!-- Bộ nút chọn A, B và Cắm tai nạn -->
+            <div class="mode-btn-stack">
+                <button id="btn-set-origin" class="mode-btn" title="Click trên bản đồ để chọn điểm xuất phát">
+                    <span>🟢</span> <strong>Chọn Điểm Đi (A)</strong>
+                </button>
+
+                <button id="btn-set-dest" class="mode-btn" title="Click trên bản đồ để chọn điểm đến">
+                    <span>🔴</span> <strong>Chọn Điểm Đến (B)</strong>
+                </button>
+
+                <button id="btn-set-accident" class="mode-btn btn-accident-mode" title="Click vào con đường bất kỳ để cắm điểm tai nạn">
+                    <span>💥</span> <strong>Cắm Tai Nạn Trên Đường</strong>
+                </button>
+            </div>
+
+            <!-- Chọn Kịch bản Lưu lượng SUMO (TH1 - TH6) -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
+                    🚦 Mật Độ Lưu Lượng SUMO
+                </label>
+                <select id="select-sumo-scenario" class="custom-select">
+                    <option value="TH1">TH1: 200 xe/h (Thông thoáng - Xanh lá)</option>
+                    <option value="TH2">TH2: 400 xe/h (Lưu thông tốt)</option>
+                    <option value="TH3" selected>TH3: 600 xe/h (Bình thường - Xanh/Vàng)</option>
+                    <option value="TH4">TH4: 800 xe/h (Đông đúc - Vàng/Đỏ)</option>
+                    <option value="TH5">TH5: 1000 xe/h (Ùn ứ diện rộng)</option>
+                    <option value="TH6">TH6: 1200 xe/h (Ùn tắc nặng - Đỏ rực)</option>
+                </select>
+            </div>
+
+            <!-- Chú thích dải màu Google Maps Traffic Flow -->
+            <div style="background: rgba(0, 0, 0, 0.4); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--bg-card-border);">
+                <div style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+                    🎨 Màu Sắc Đoạn Đường (Google Maps):
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 12px; height: 6px; background: #10b981; border-radius: 3px;"></span>
+                        <span>Xanh: Vắng (>38km/h)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 12px; height: 6px; background: #f59e0b; border-radius: 3px;"></span>
+                        <span>Vàng: Đông (22-38km/h)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 12px; height: 6px; background: #ef4444; border-radius: 3px;"></span>
+                        <span>Đỏ: Ùn tắc (12-22km/h)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 12px; height: 6px; background: #991b1b; border-radius: 3px;"></span>
+                        <span>Đỏ sẫm: Kẹt cứng / Tai nạn</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bộ điều khiển tốc độ tua mô phỏng SUMO -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 11px; background: rgba(0, 0, 0, 0.4); padding: 7px 10px; border-radius: 8px; border: 1px solid var(--bg-card-border);">
+                <span style="color: var(--text-secondary); font-weight: 700;">Tua Mô Phỏng:</span>
+                <div style="display: flex; gap: 4px;">
+                    <button class="btn-sim-speed" data-speed="4" title="Tua 4x">4x</button>
+                    <button class="btn-sim-speed active" data-speed="8" title="Tua 8x (Chuẩn)">8x</button>
+                    <button class="btn-sim-speed" data-speed="15" title="Tua 15x (Nhanh)">15x</button>
+                    <button class="btn-sim-speed" data-speed="25" title="Tua 25x (Cực nhanh)">25x</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-restart-sim" class="btn btn-primary" style="flex: 1; justify-content: center;">
+                    🏎️ Đua Xe Mô Phỏng
+                </button>
+                <button id="btn-clear-accidents" class="btn btn-outline" title="Xóa toàn bộ tai nạn">
+                    🗑️ Xóa Tai Nạn
+                </button>
+            </div>
+
+            <!-- Trạng thái 2 xe đang chạy đua -->
+            <div style="background: rgba(0, 0, 0, 0.35); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
+                    Tốc Độ Thực Tế Của 2 Xe
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                    <span style="color: var(--static-orange); font-weight: 700;">🚗 Xe Dijkstra (Cố định):</span>
+                    <span id="car-static-speed" style="font-family: var(--font-mono); font-weight: 700;">45 km/h</span>
+                </div>
+                <div style="font-size: 11px; color: #fca5a5;" id="car-static-state">Bình thường</div>
+
+                <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 2px 0;"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                    <span style="color: var(--aco-purple); font-weight: 700;">🏎️ Xe ACO (Thích nghi):</span>
+                    <span id="car-aco-speed" style="font-family: var(--font-mono); font-weight: 700;">50 km/h</span>
+                </div>
+                <div style="font-size: 11px; color: #c084fc;" id="car-aco-state">Lưu thông thông suốt</div>
+            </div>
+        </aside>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             3. BẢNG SO SÁNH THỜI GIAN THỰC Ở ĐÁY MÀN HÌNH (BOTTOM HUD)
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div class="floating-hud">
+            <!-- Tuyến Cố Định (Dijkstra) -->
+            <div class="hud-route-card">
+                <div class="route-dot dot-static"></div>
+                <div class="hud-route-info">
+                    <span class="hud-route-title" style="color: var(--static-orange);">Lộ Trình Cố Định (Dijkstra)</span>
+                    <div class="hud-route-stats">
+                        <span id="hud-static-time">-- phút</span>
+                        <span style="font-size: 12px; color: var(--text-muted);">•</span>
+                        <span style="font-size: 14px; color: var(--text-secondary);" id="hud-static-dist">-- km</span>
+                    </div>
+                    <div id="hud-static-status">
+                        <span class="badge badge-neutral">Bình Thường</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-divider"></div>
+
+            <!-- Tuyến Thích Nghi (ACO) -->
+            <div class="hud-route-card">
+                <div class="route-dot dot-aco"></div>
+                <div class="hud-route-info">
+                    <span class="hud-route-title" style="color: var(--aco-purple);">Lộ Trình Thích Nghi (ACO)</span>
+                    <div class="hud-route-stats">
+                        <span id="hud-aco-time" style="color: #c084fc;">-- phút</span>
+                        <span style="font-size: 12px; color: var(--text-muted);">•</span>
+                        <span style="font-size: 14px; color: var(--text-secondary);" id="hud-aco-dist">-- km</span>
+                    </div>
+                    <div id="hud-aco-status">
+                        <span class="badge badge-success">✨ Thông Thoáng (Né Tai Nạn)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-divider"></div>
+
+            <!-- Thẻ Kết Luận Tiết Kiệm Thời Gian -->
+            <div class="savings-highlight">
+                <div class="savings-label">Hiệu Quả Thuật Toán ACO</div>
+                <div class="savings-val" id="hud-savings-badge">Đang phân tích...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Khung thông báo Toast -->
+    <div id="toast-container"></div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SCRIPTS VÀ CÁC THƯ VIỆN LÕI
+         ═══════════════════════════════════════════════════════════════════ -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/osm_data_bundle.js"></script>
+    <script src="js/real_road_engine.js"></script>
+    <script src="js/map_controller.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
