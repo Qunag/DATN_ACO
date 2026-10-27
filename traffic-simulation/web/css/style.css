@@ -1,0 +1,541 @@
+/* ==========================================================================
+   style.css – Giao diện Điều Hướng Khung Đường Google Maps Thực Tế
+   Glassmorphism, Dark Mode, Pin Markers A/B, Tai Nạn 💥 và Xe Đua Real-time
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+:root {
+    --bg-dark: #090d16;
+    --bg-card: rgba(15, 23, 42, 0.88);
+    --bg-card-border: rgba(255, 255, 255, 0.1);
+    --bg-glass: rgba(30, 41, 59, 0.75);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    --primary: #3b82f6;
+    --aco-purple: #a855f7;
+    --static-orange: #f97316;
+    --traffic-green: #10b981;
+    --traffic-red: #ef4444;
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. THANH TIÊU ĐỀ (TOP NAVBAR)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.top-navbar {
+    height: 60px;
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--bg-card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    font-size: 24px;
+    background: linear-gradient(135deg, #3b82f6, #a855f7);
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.35);
+}
+
+.brand-text h1 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    background: linear-gradient(90deg, #ffffff, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.brand-text p {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.btn-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+}
+
+.btn-primary { background: #2563eb; color: #ffffff; }
+.btn-primary:hover { background: #1d4ed8; }
+
+.btn-danger { background: #dc2626; color: #ffffff; }
+.btn-danger:hover { background: #b91c1c; }
+
+.btn-outline {
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-secondary);
+    border-color: var(--bg-card-border);
+}
+
+.btn-outline:hover, .btn-outline.active {
+    background: var(--bg-glass);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. KHÔNG GIAN BẢN ĐỒ VÀ BẢNG ĐIỀU KHIỂN
+   ═══════════════════════════════════════════════════════════════════════════ */
+.workspace {
+    flex: 1;
+    position: relative;
+    display: flex;
+    overflow: hidden;
+}
+
+#map-container {
+    width: 100%;
+    height: 100%;
+    background-color: #121826;
+    z-index: 1;
+}
+
+/* ── SIDEBAR ĐIỀU KHIỂN CHỌN ĐIỂM VÀ TAI NẠN (LEFT PANEL) ── */
+.floating-sidebar {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 320px;
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 16px;
+    padding: 18px;
+    z-index: 500;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sidebar-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mode-btn-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mode-btn {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--bg-card-border);
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+    background: rgba(51, 65, 85, 0.8);
+    transform: translateY(-1px);
+}
+
+.mode-btn.active {
+    border-color: #38bdf8;
+    background: rgba(14, 165, 233, 0.2);
+    color: #38bdf8;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+.btn-accident-mode {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(220, 38, 38, 0.15);
+    color: #fca5a5;
+}
+
+.btn-accident-mode:hover, .btn-accident-mode.active {
+    background: rgba(220, 38, 38, 0.35);
+    border-color: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+.hint-box {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    border-left: 3px solid #38bdf8;
+}
+
+.btn-sim-speed {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-sim-speed:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.btn-sim-speed.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. BẢNG SO SÁNH THỜI GIAN THỰC Ở ĐÁY MÀN HÌNH (BOTTOM COMPARISON HUD)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.floating-hud {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 18px;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    z-index: 500;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+}
+
+.hud-route-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.route-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+}
+
+.dot-static { background: var(--static-orange); box-shadow: 0 0 10px var(--static-orange); }
+.dot-aco { background: var(--aco-purple); box-shadow: 0 0 12px var(--aco-purple); }
+
+.hud-route-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.hud-route-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.hud-route-stats {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hud-divider {
+    width: 1px;
+    height: 48px;
+    background: var(--bg-card-border);
+}
+
+.badge {
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-sans);
+}
+
+.badge-success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+.badge-neutral { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+.savings-highlight {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2));
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    border-radius: 12px;
+    padding: 8px 14px;
+    text-align: center;
+}
+
+.savings-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #c084fc;
+    text-transform: uppercase;
+}
+
+.savings-val {
+    font-size: 14px;
+    font-weight: 800;
+    color: #ffffff;
+    font-family: var(--font-sans);
+    margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. GHIM ĐIỂM A/B, ĐIỂM TAI NẠN VÀ XE CHẠY THỰC TẾ
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pin-marker {
+    position: relative;
+    width: 36px;
+    height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pin-head {
+    width: 32px;
+    height: 32px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    border: 2px solid #ffffff;
+}
+
+.pin-origin .pin-head { background: linear-gradient(135deg, #10b981, #059669); }
+.pin-dest .pin-head { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+
+.pin-head span {
+    transform: rotate(45deg);
+}
+
+.pin-pulse {
+    position: absolute;
+    bottom: -2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    animation: pinPulse 1.5s ease-out infinite;
+}
+
+.pin-origin .pin-pulse { background: rgba(16, 185, 129, 0.6); }
+.pin-dest .pin-pulse { background: rgba(239, 68, 68, 0.6); }
+
+@keyframes pinPulse {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Điểm Tai Nạn (Accident Marker) */
+.accident-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    animation: bounce 0.8s ease infinite alternate;
+}
+
+.accident-icon {
+    font-size: 26px;
+    filter: drop-shadow(0 0 10px #ef4444);
+}
+
+.accident-label {
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+    margin-top: -4px;
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-8px); }
+}
+
+/* Xe di chuyển (Real Car Sprite) */
+.real-car-marker {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.car-body {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.05s linear;
+}
+
+.car-sprite {
+    font-size: 20px;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.8));
+}
+
+.car-badge-aco {
+    position: absolute;
+    top: -6px;
+    background: #a855f7;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 4px;
+    box-shadow: 0 0 8px #a855f7;
+}
+
+.car-badge-static {
+    position: absolute;
+    top: -6px;
+    background: #f97316;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 4px;
+    box-shadow: 0 0 8px #f97316;
+}
+
+.car-blocked {
+    animation: flashHazard 0.6s infinite alternate;
+}
+
+@keyframes flashHazard {
+    from { filter: drop-shadow(0 0 2px #ef4444); }
+    to { filter: drop-shadow(0 0 12px #ef4444); }
+}
+
+/* Tooltip trên bản đồ */
+.custom-map-tooltip {
+    background: rgba(15, 23, 42, 0.95) !important;
+    border: 1px solid var(--bg-card-border) !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    font-family: var(--font-sans) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. TOAST THÔNG BÁO (TOASTS)
+   ═══════════════════════════════════════════════════════════════════════════ */
+#toast-container {
+    position: fixed;
+    top: 75px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 3000;
+}
+
+.toast {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--bg-card-border);
+    backdrop-filter: blur(12px);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #ffffff;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.3s ease;
+    transition: opacity 0.4s ease;
+}
+
+.toast-info { border-left: 4px solid var(--primary); }
+.toast-success { border-left: 4px solid var(--traffic-green); }
+.toast-warning { border-left: 4px solid #f59e0b; }
+.toast-error { border-left: 4px solid var(--traffic-red); }
+
+.toast.fade-out { opacity: 0; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
