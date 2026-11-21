@@ -221,15 +221,40 @@ class TrafficGraph:
         )
         return cost
 
+    def get_bpr_cost(self, from_node: str, to_node: str) -> float:
+        """
+        Chi phí trở kháng cạnh theo chuẩn BPR (Bureau of Public Roads):
+            C_ij(t) = T_free · [1 + alpha · (N_ij / C_max)^beta] + w_w · W_norm
+        Phản ánh quy luật vật lý: mật độ tăng phi tuyến gây sụt giảm vận tốc.
+        """
+        key = (from_node, to_node)
+        dist = self.distance.get(key, 0)
+        t_free = max(dist / 13.89, 1.0)  # 50 km/h tự do
+        n_veh = self.vehicles.get(key, 0)
+        c_max = max(dist / 7.5, 10.0)    # Dung năng thiết kế dựa trên chiều dài
+        waiting = self.waiting.get(key, 0.0)
+        w_norm = min(waiting / NORM_BOUNDS["waiting"], 1.0)
+
+        # Công thức BPR với alpha=0.15, beta=4.0
+        saturation = min(n_veh / c_max, 2.5)
+        bpr_travel_time = t_free * (1.0 + 0.15 * math.pow(saturation, 4.0))
+        t_norm = min(bpr_travel_time / NORM_BOUNDS["travel_time"], 1.0)
+        d_norm = min(dist / NORM_BOUNDS["distance"], 1.0)
+
+        w = self.cost_weights
+        return w["w_d"] * d_norm + w["w_t"] * t_norm + w["w_w"] * w_norm
+
     def get_cost(self, from_node: str, to_node: str, mode: str = "traffic_aware") -> float:
         """
         Trả về chi phí cạnh theo mode.
 
         Args:
-            mode: "static" (chỉ khoảng cách) hoặc "traffic_aware" (có dữ liệu giao thông)
+            mode: "static" (chỉ khoảng cách), "traffic_aware", hoặc "bpr" / "t_aco"
         """
         if mode == "static":
             return self.get_static_cost(from_node, to_node)
+        elif mode in ["bpr", "t_aco"]:
+            return self.get_bpr_cost(from_node, to_node)
         else:
             return self.get_dynamic_cost(from_node, to_node)
 
@@ -293,6 +318,7 @@ class AntColonyOptimizer:
         adaptive_rho: bool  = False,
         rho_min:      float = 0.05,
         rho_max:      float = 0.3,
+        density_evap: bool  = True,
     ):
         """
         Args:
@@ -301,12 +327,13 @@ class AntColonyOptimizer:
             n_iterations: Số vòng lặp
             alpha:        Mức độ ảnh hưởng của pheromone (Báo cáo 1, Mục 4)
             beta:         Mức độ ảnh hưởng của heuristic (Báo cáo 1, Mục 4)
-            rho:          Tỷ lệ bay hơi pheromone (Báo cáo 1, Mục 4)
+            rho:          Tỷ lệ bay hơi pheromone cơ bản (Báo cáo 1, Mục 4)
             Q:            Hằng số cập nhật pheromone (Báo cáo 1, Mục 4)
-            mode:         "basic" hoặc "traffic_aware"
-            adaptive_rho: Bật pheromone thích nghi (Báo cáo 1, Mục 5.2)
+            mode:         "basic", "traffic_aware", hoặc "t_aco"
+            adaptive_rho: Bật pheromone thích nghi theo vòng lặp
             rho_min:      Tỷ lệ bay hơi tối thiểu (cho adaptive)
             rho_max:      Tỷ lệ bay hơi tối đa (cho adaptive)
+            density_evap: Bay hơi thích nghi theo mật độ giao thông T-ACO
         """
         self.graph = graph
         self.n_ants = n_ants
@@ -319,6 +346,7 @@ class AntColonyOptimizer:
         self.adaptive_rho = adaptive_rho
         self.rho_min = rho_min
         self.rho_max = rho_max
+        self.density_evap = density_evap
 
         # Ma trận pheromone: τ[i][j]
         # Khởi tạo τ_0 = 1.0 cho tất cả cạnh
@@ -460,23 +488,29 @@ class AntColonyOptimizer:
         """
         Bay hơi pheromone trên tất cả cạnh.
 
-        τ_ij ← (1 - ρ) · τ_ij
-
-        Nếu adaptive_rho = True (Báo cáo 1, Mục 5.2):
-            ρ(t) = ρ_max - (t/T)(ρ_max - ρ_min)
+        - Mặc định: τ_ij ← (1 - ρ) · τ_ij
+        - T-ACO (Density-induced evaporation):
+            ρ_ij(t) = ρ_0 + (1 - ρ_0) · min(1.0, (N_ij / C_max)^2)
+            Khi đường ùn tắc (N_ij -> C_max), ρ_ij tăng vọt tiệm cận 1.0,
+            xóa sạch mùi hương trên cung đường tắc chỉ sau 1-2 chu kỳ.
         """
-        if self.adaptive_rho:
-            # Pheromone thích nghi (Báo cáo 1, Mục 5.2)
-            rho = self.rho_max - (iteration / max(self.n_iterations, 1)) * \
-                  (self.rho_max - self.rho_min)
-        else:
-            rho = self.rho
+        for (u, v) in self.pheromone:
+            if self.density_evap and self.mode in ["traffic_aware", "bpr", "t_aco"]:
+                dist = self.graph.distance.get((u, v), 100.0)
+                c_max = max(dist / 7.5, 10.0)
+                n_veh = self.graph.vehicles.get((u, v), 0)
+                saturation = min(n_veh / c_max, 1.0)
+                edge_rho = self.rho + (1.0 - self.rho) * (saturation ** 2)
+            elif self.adaptive_rho:
+                edge_rho = self.rho_max - (iteration / max(self.n_iterations, 1)) * \
+                          (self.rho_max - self.rho_min)
+            else:
+                edge_rho = self.rho
 
-        for key in self.pheromone:
-            self.pheromone[key] *= (1.0 - rho)
+            self.pheromone[(u, v)] *= (1.0 - edge_rho)
             # Đảm bảo pheromone không quá nhỏ
-            if self.pheromone[key] < EPSILON:
-                self.pheromone[key] = EPSILON
+            if self.pheromone[(u, v)] < EPSILON:
+                self.pheromone[(u, v)] = EPSILON
 
     def _update_pheromone(self, paths: List[Tuple[List[str], float]]):
         """
@@ -565,6 +599,94 @@ class AntColonyOptimizer:
 
         return self.best_path, self.best_cost
 
+    def solve_multiroute(
+        self,
+        source: str,
+        destination: str,
+        top_k: int = 3,
+        theta: float = 2.0,
+        verbose: bool = False
+    ) -> List[Dict]:
+        """
+        Trích xuất Top-K tuyến đường phân biệt và phân bổ tỷ lệ xác suất theo mô hình Boltzmann / Logit:
+            P(R_k) = exp(-theta * C(R_k)) / Sum(exp(-theta * C(R_m)))
+
+        Giải quyết trọn vẹn yêu cầu số 2 và số 4 của Thầy hướng dẫn:
+        Không dồn 100% xe vào 1 tuyến, mà san sẻ lưu lượng theo xác suất để tránh Nghịch lý Braess.
+
+        Returns:
+            Danh sách dicts thông tin từng tuyến:
+            [
+                {
+                    "route_id": "T-ACO-R1",
+                    "path": ["A", "B", "E", "I"],
+                    "edges": ["A2B", "B2E", "E2I"],
+                    "cost": 1.245,
+                    "probability": 0.65,
+                }, ...
+            ]
+        """
+        path_pool: Dict[Tuple[str, ...], float] = {}
+
+        for iteration in range(self.n_iterations):
+            ant_paths = []
+            for ant in range(self.n_ants):
+                path = self._construct_path(source, destination)
+                if path is not None:
+                    cost = self.graph.compute_path_cost(path, self.mode)
+                    ant_paths.append((path, cost))
+                    p_tuple = tuple(path)
+                    if p_tuple not in path_pool or cost < path_pool[p_tuple]:
+                        path_pool[p_tuple] = cost
+
+                    if cost < self.best_cost:
+                        self.best_cost = cost
+                        self.best_path = path[:]
+
+            self._evaporate_pheromone(iteration)
+            self._update_pheromone(ant_paths)
+
+        if not path_pool:
+            return []
+
+        # Sắp xếp các tuyến phân biệt theo chi phí tăng dần
+        sorted_paths = sorted(path_pool.items(), key=lambda x: x[1])
+        top_candidates = sorted_paths[:top_k]
+
+        # Tính xác suất Boltzmann/Logit: P(R_k) = exp(-theta * C_k) / sum(exp(-theta * C_m))
+        costs = [cost for _, cost in top_candidates]
+        min_c = min(costs)
+        # Shift min_c để tránh tràn số hoặc underflow
+        exp_weights = [math.exp(-theta * (c - min_c)) for c in costs]
+        total_exp = sum(exp_weights)
+
+        if total_exp == 0:
+            probs = [round(1.0 / len(top_candidates), 4)] * len(top_candidates)
+        else:
+            raw_probs = [w / total_exp for w in exp_weights]
+            # Chuẩn hóa tổng chính xác 1.0
+            s = sum(raw_probs)
+            probs = [round(p / s, 4) for p in raw_probs]
+
+        results = []
+        for i, (p_tup, cost) in enumerate(top_candidates):
+            p_list = list(p_tup)
+            results.append({
+                "route_id": f"T-ACO-R{i+1}",
+                "path": p_list,
+                "edges": self.graph.path_to_edges(p_list),
+                "cost": round(cost, 4),
+                "probability": probs[i],
+            })
+
+        if verbose:
+            print(f"\n  [T-ACO Top-{len(results)} Tuyến đường & Phân luồng Xác suất Boltzmann]")
+            for r in results:
+                print(f"    • {r['route_id']}: {' → '.join(r['path'])} | "
+                      f"Chi phí={r['cost']:.4f} | Xác suất={r['probability']*100:.1f}%")
+
+        return results
+
     def get_stats(self) -> Dict:
         """Trả về thống kê sau khi chạy."""
         return {
@@ -650,6 +772,22 @@ def run_self_test():
     assert path3 is not None, "ACO adaptive không tìm được đường!"
     print(f"  ✓ ACO Adaptive: OK")
 
+    # ── Test 4: T-ACO Phân luồng Top-K theo xác suất Boltzmann & Hàm BPR ──
+    print(f"\n{'─'*65}")
+    print("  TEST 4: T-ACO Phân luồng Top-K Xác suất Boltzmann & Hàm BPR")
+    print(f"{'─'*65}")
+    t_aco = AntColonyOptimizer(
+        graph, mode="t_aco",
+        n_ants=25, n_iterations=60,
+        density_evap=True,
+    )
+    multiroutes = t_aco.solve_multiroute("A", "I", top_k=3, theta=2.0, verbose=True)
+    assert len(multiroutes) > 0, "T-ACO không tìm được Top-K tuyến đường!"
+    prob_sum = sum(r["probability"] for r in multiroutes)
+    print(f"  Tổng xác suất phân luồng: {prob_sum:.4f}")
+    assert abs(prob_sum - 1.0) < 0.05, f"Tổng xác suất không xấp xỉ 1.0 ({prob_sum})"
+    print(f"  ✓ T-ACO Stochastic Multi-Path: OK")
+
     # ── Tóm tắt ──
     print(f"\n{'='*65}")
     print("  TÓM TẮT SELF-TEST")
@@ -660,7 +798,9 @@ def run_self_test():
           f"(cost={aco_traffic.best_cost:.4f})")
     print(f"  ACO Adaptive:       {' → '.join(aco_adaptive.best_path)}  "
           f"(cost={aco_adaptive.best_cost:.4f})")
-    print(f"\n  ✓ Tất cả test PASSED!")
+    print(f"  T-ACO Top-1:        {' → '.join(multiroutes[0]['path'])}  "
+          f"(prob={multiroutes[0]['probability']*100:.1f}%)")
+    print(f"\n  ✓ Tất cả 4 test PASSED thành công!")
     print(f"{'='*65}")
 
 
