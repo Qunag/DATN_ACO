@@ -1,0 +1,2 @@
+seed,policy,requested,considered,finished_in_sumo,arrived,ended_by_teleport,arrived_without_teleport,teleported_vehicles,removed_other,unfinished,complete,total_s,mean_s,p95_s,loaded,with_alternative,rerouted,rejected,teleports,colliding_vehicle_events,end_s
+52,previous,10000,10000,10000,9769,231,4475,5525,0,0,True,69117420.0,6911.742,16248.8,10000,9164,3806,0,10121,0,20250.0

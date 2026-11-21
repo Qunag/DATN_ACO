@@ -63,6 +63,7 @@ traffic-simulation/
     │
     ├── osm/                         # 🗺️ Bản đồ thực tế
     │   ├── osm_setup.py             # Hỗ trợ tải/convert OSM
+    │   ├── fleet.py                 # Phân luồng các xe do SUMO sinh
     │   └── osm_runner.py            # ACO + SUMO trên map OSM
     │
     ├── experiments/                 # 🧪 Thí nghiệm & phân tích
@@ -278,7 +279,8 @@ thay vì mạng 3×3 nhân tạo, để đánh giá scalability.
 | Script | Vai trò |
 |---|---|
 | `scripts/core/osm_graph.py` | OSMTrafficGraph: parse net.xml, ACO + Dijkstra cho mạng OSM |
-| `scripts/osm/osm_runner.py` | Chạy so sánh + dynamic rerouting trên bản đồ OSM |
+| `scripts/osm/osm_runner.py` | Chạy so sánh, tái định tuyến hoặc điều phối toàn bộ xe trên bản đồ OSM |
+| `scripts/osm/fleet.py` | Tìm tuyến hợp lệ, đo hàng đợi và phân luồng từng xe |
 | `scripts/osm/osm_setup.py` | Tiện ích tải và cấu hình OSM |
 
 ### ACO cải tiến cho mạng lớn
@@ -314,3 +316,79 @@ python -m scripts.osm.osm_runner --nogui --mode reroute --duration 600
 # Tùy chỉnh ACO
 python -m scripts.osm.osm_runner --nogui --mode compare --n-ants 50 --iterations 100
 ```
+
+### Phân luồng toàn bộ xe trên bản đồ OSM
+
+Chạy các lệnh sau trong thư mục `traffic-simulation`. Chế độ `fleet` xét từng xe do SUMO sinh ngay khi xuất phát. Mỗi xe giữ điểm đi, điểm đến và các điểm dừng bắt buộc của chuyến đó. Xe chạy theo tuyến dịch vụ cố định giữ nguyên hành trình.
+
+```powershell
+# Mở map2 bằng SUMO-GUI và điều phối toàn bộ nhu cầu
+python -m scripts.osm.osm_runner --mode fleet
+
+# Chạy năm phương án trên cùng nhu cầu và cùng hạt giống đến khi hết xe
+python -m scripts.osm.osm_runner --mode fleet --nogui --policy compare --seed 51
+
+# Tìm và phân bổ tuyến theo tình trạng hiện tại của toàn mạng
+python -m scripts.osm.osm_runner --mode fleet --nogui --policy adaptive --seed 61
+
+# Dùng mạng, các tuyến và luồng xe của một cấu hình SUMO khác
+python -m scripts.osm.osm_runner --mode fleet --nogui --cfg duong-dan/ban-do.sumocfg
+
+# Tai nạn ngẫu nhiên trên Bologna, đối chứng cùng vị trí cho cả năm chính sách
+python -m scripts.osm.osm_runner --mode fleet --nogui --cfg scenarios/sumo-scenarios/bologna/acosta/run.sumocfg --policy compare --incident --seed 51 --output-dir output/bologna/incident
+
+# Tai nạn nối tiếp, nhiều mức độ trong vùng trung tâm Bologna, nhu cầu xe tăng 1,5 lần
+python -m scripts.osm.osm_runner --mode fleet --cfg scenarios/sumo-scenarios/bologna/acosta/run.sumocfg --policy adaptive --demand-scale 1.5 --incident-dynamic --incident-area 300 200 1500 1150 --incident-count 5 --seed 51 --gui-delay 5 --pause-at 3400 --output-dir output/bologna/regional-incident/gui
+
+# Cùng lịch tai nạn trong vùng, giảm về 8.779 xe với hạt giống 51
+python -B -m scripts.osm.osm_runner --mode fleet --cfg scenarios/sumo-scenarios/bologna/acosta/run.sumocfg --policy adaptive --demand-scale 1 --incident-dynamic --incident-area 300 200 1500 1150 --incident-count 5 --seed 51 --gui-delay 5 --pause-at 3400 --output-dir output/bologna/regional-incident-reduced/gui
+```
+
+ACO tìm một tuyến thay thế trên các đoạn và lượt rẽ hợp lệ cho loại xe. Hệ thống dùng Dijkstra để dựng các đường rẽ khác từ hành trình ban đầu và cho 4 kiến tìm đường trong 3 vòng trên tối đa 3 hành lang. Mỗi đường đề xuất có thời gian thông thoáng tối đa bằng 130% thời gian của tuyến gốc cộng 15 giây. Khi chỉ có một tuyến phù hợp, xe tiếp tục theo tuyến SUMO đã cấp. Mỗi xe nhận một quyết định lúc xuất phát. Số liệu giao thông tiếp tục cập nhật cho các xe đến sau.
+
+| Phương án | Cách chọn khi có hai tuyến |
+|---|---|
+| `original` | Giữ tuyến gốc của từng xe trong SUMO. |
+| `equal` | Mỗi tuyến có xác suất 50%. |
+| `previous` | Ưu tiên tuyến có thời gian ước tính thấp hơn, cộng 2 giây cho mỗi xe sắp đến cùng lối vào đèn. |
+| `queue` | Tính thời gian giải tỏa từ số xe đang chờ, số xe sắp đến và lượng xe thực tế qua lối vào trong từng chu kỳ đèn. |
+| `adaptive` (mặc định) | Tìm lại đường vòng bằng chi phí từng lượt rẽ trên toàn mạng. Xác suất đổi tuyến tăng khi lợi ích dự kiến vượt cả 15 giây và 10% chi phí tuyến gốc. |
+
+Các đoạn đường đều dùng tốc độ quan sát trong SUMO để ước tính thời gian. Ở lối vào có đèn, `queue` lấy giá trị lớn hơn giữa thời gian theo tốc độ và thời gian thông thoáng cộng thời gian giải tỏa, tránh tính trùng thời gian chờ. Khi xe chưa đến, hệ thống dự báo tải cho 120 giây tiếp theo, gộp các xe có giờ đến chênh tối đa 30 giây. Mức khởi đầu là 0,25 xe/giây cho mỗi làn được đèn điều khiển. Sau mỗi chu kỳ hoàn chỉnh có hàng đợi, hệ thống cập nhật mức này bằng trung bình của mức trước và lưu lượng thoát đo được.
+
+Với `adaptive`, khi có xe xuất phát, hệ thống lấy tốc độ và số xe đứng chờ trên toàn mạng qua TraCI, tối đa một lần mỗi 30 giây. Nó làm trơn độ trễ với hằng số thời gian 60 giây và xét số làn phục vụ từng lượt rẽ. Sau mỗi quyết định, tuyến thực tế được ghi vào cửa sổ 120 giây để các xe tiếp theo tính đến tải mới. Khi lợi ích vượt ngưỡng, bộ điều phối tăng dần xác suất chuyển hướng nhưng giữ xác suất dưới 85%. Các ngưỡng và thời gian chờ tại lượt rẽ là giả thiết mô phỏng cần hiệu chỉnh khi dùng cho mạng khác.
+
+Thêm `--incident` để mô phỏng tác động của một tai nạn bằng cách giảm giới hạn tốc độ trên toàn bộ các làn của một đoạn đường một chiều. Đoạn đường được chọn ngẫu nhiên trong các đoạn dài ít nhất 50 m, cho phép ô tô con và có đường vào/ra. Cùng mạng và `--seed` sẽ chọn cùng vị trí cho mọi chính sách. Mặc định sự cố xảy ra tại giây 900, kéo dài 900 giây và giới hạn tốc độ còn 20% ban đầu. Các tham số `--incident-start`, `--incident-duration`, `--incident-speed-factor` cho phép đổi ba giá trị này. Khi hết thời gian, mỗi làn được phục hồi đúng giới hạn tốc độ trước sự cố. Để xem cả quá trình bắt đầu và phục hồi trong lượt thử ngắn, dùng `--duration 2100`.
+
+Các lượt có sự cố ghi thêm `incidents.csv` trong thư mục chính sách. Tệp ghi thời điểm thực tế, đoạn đường, làn và giới hạn tốc độ trước/sau mỗi lần áp dụng hoặc phục hồi, đơn vị m/s. `summary.csv` có thêm vị trí, lịch sự cố, tỷ lệ tốc độ và `incident_applied` cho biết sự cố đã thực sự được áp dụng. `adaptive` tiếp nhận ảnh hưởng thông qua tốc độ và hàng đợi quan sát được rồi gợi ý tuyến cho các xe xuất phát tiếp theo.
+
+`--incident-count` đặt số đoạn tai nạn cố định, mặc định 1. `--demand-scale` nhân số xe trong cùng khoảng thời gian xuất phát, mặc định 1. Trong SUMO-GUI, các đoạn tai nạn có ghim màu và các xe thực sự đổi tuyến chuyển sang màu xanh ngọc. `--gui-delay` đặt độ trễ hiển thị theo mili giây giữa hai bước mô phỏng. `--pause-at` cho phép dừng tại một giây cụ thể để quan sát, nhấn nút chạy để tiếp tục.
+
+`--incident-dynamic` phát sinh các tai nạn nối tiếp với mức độ riêng. Mặc định, hệ thống thử tạo sự cố cách nhau ngẫu nhiên 120–300 giây, từ giây 900 đến trước giây 3.600. Trong chế độ này, `--incident-duration` là khoảng thời gian phát sinh sự cố và `--incident-count` là số tai nạn tối đa đồng thời, mặc định 5. Mỗi sự cố tiếp tục tồn tại đến giờ phục hồi riêng, kể cả khi đã hết khoảng thời gian phát sinh. Khi đủ số lượng tối đa, hệ thống chờ lượt tạo tiếp theo. Đoạn đang có tai nạn được loại khỏi danh sách chọn cho đến khi phục hồi.
+
+| Mức độ | Tốc độ giới hạn còn lại | Thời gian ảnh hưởng | Màu SUMO-GUI |
+|---|---:|---:|---|
+| Nhẹ | 70% | 5 phút | Vàng |
+| Vừa | 40% | 10 phút | Cam |
+| Nặng | 20% | 20 phút | Đỏ |
+| Rất nặng | 10% | 30 phút | Đỏ sẫm |
+
+Các mức độ được lấy mẫu với trọng số tương ứng 4, 3, 2, 1. Đây là giả định thí nghiệm. `--incident-speed-factor` dùng cho sự cố cố định. Trong chế độ động, tỷ lệ tốc độ và thời gian phục hồi lấy từ bảng mức độ.
+
+`--incident-area XMIN YMIN XMAX YMAX` giới hạn vị trí trong vùng chữ nhật, dùng tọa độ SUMO địa phương tính bằng mét. Ví dụ Bologna `300 200 1500 1150` nằm trong mạng có giới hạn xấp xỉ `0 0 1817.58 1350.19`. Toàn bộ đường hình học của đoạn được chọn phải nằm trong vùng. Chế độ động hiển thị đường viền vùng màu xanh trên SUMO-GUI. Nếu bỏ tham số vùng, chế độ động dùng giới hạn toàn mạng.
+
+Lịch `incident-plan.csv` được tạo trước mô phỏng, gồm mã sự cố, đoạn đường, thời điểm bắt đầu/kết thúc, mức độ và tỷ lệ tốc độ. Cùng mạng, vùng, tham số và hạt giống tạo cùng lịch cho mọi chính sách, độc lập với quyết định phân luồng. Với chế độ động, `incidents.csv` ghi thêm các thông tin kế hoạch bên cạnh thời điểm thực sự áp dụng/phục hồi. `incident_count` trong bảng tổng hợp là tổng số sự cố đã lên lịch, `incident_applied_count` là số đã bắt đầu và `incident_max_active` là giới hạn đồng thời.
+
+Mỗi lượt tạo thư mục riêng trong `output/fleet`. Trong `summary.csv`, `loaded` và `considered` lần lượt đếm xe SUMO nạp và xe được xét. `finished_in_sumo` đếm chuyến kết thúc tại cạnh đích, gồm xe tới bình thường (`arrived`) và xe kết thúc bằng dịch chuyển (`ended_by_teleport`). `arrived_without_teleport` đếm các xe về đích mà suốt hành trình không bị dịch chuyển. `total_s` tính từ giờ xuất phát theo lịch đến lúc mô phỏng ghi nhận kết thúc, kể cả chờ vào mạng. Chỉ số này được ghi khi `complete=True`. Với các lượt có dịch chuyển, cần đọc nó cùng số chuyến bị ảnh hưởng.
+
+Trong từng thư mục phương án, `decisions.csv` ghi quyết định cho từng xe, `cycles.csv` ghi hàng đợi và số xe qua đèn, `teleports.csv` ghi mã xe và thời điểm bắt đầu dịch chuyển, `tripinfo.xml.gz` chứa số liệu chuyến đi gốc của SUMO. Các tệp xuất khác mà bản đồ đã cấu hình có tiền tố riêng cho từng lượt. Để kiểm tra nhanh có thể đặt `--duration 120`. Khi dừng sớm, `requested` đếm các bản ghi chuyến SUMO đã xuất tại thời điểm dừng và `loaded` có thể lớn hơn. Các lượt đối chứng dùng cùng nhu cầu, cùng hạt giống và cùng thiết lập dịch chuyển của cấu hình bản đồ.
+
+Trong thử nghiệm ban đầu với 10.000 xe trên `map2`, giữ tuyến gốc nhanh nhất trong bốn phương án `original`, `equal`, `previous` và `queue` ở cả hai hạt giống 51 và 52. [Báo cáo thử nghiệm ban đầu](output/fleet/map2/ket-qua.md)
+
+Ở hai hạt giống mới 61 và 62, `adaptive` giảm thời gian trung bình từ **105,5 xuống 78,2 phút/xe** so với giữ tuyến SUMO, tương đương **25,9%** tổng thời gian. Mỗi lượt có thêm 839 đến 1.060 xe tới đích mà SUMO không phải dịch chuyển. Dữ liệu thử gồm 10.000 ô tô con và mỗi lượt chạy đến khi hết xe. [Kết quả từng hạt giống và nhật ký đối chứng](output/fleet/map2-performance/ket-qua.md)
+
+Đã chạy thêm sáu lượt có tai nạn trên Bologna, mỗi lượt đủ 8.779 xe. Với ba vị trí ngẫu nhiên ở hạt giống 51, 52, 53, `adaptive` giảm **6,78%** tổng thời gian so với giữ tuyến gốc dưới cùng sự cố. Tất cả xe trong sáu lượt đều tự về đích, chỉ số dịch chuyển và va chạm bằng 0. [Báo cáo tai nạn và cách chạy lại](output/bologna/incident/ket-qua.md)
+
+Với chế độ động trong vùng trung tâm và nhu cầu 1,5 lần, hạt giống 51 tạo 13 tai nạn nhiều mức độ, tối đa 5 đồng thời. Hai lượt đều hoàn thành đủ 13.169 xe. Trong phép thử này, `adaptive` có tổng thời gian cao hơn giữ tuyến **9,41%**, với 66 so với 8 xe bị dịch chuyển. [Lịch sự cố, kết quả đối chứng và lệnh mở SUMO-GUI](output/bologna/regional-incident/ket-qua.md)
+
+Giảm về nhu cầu gốc 8.779 xe và giữ nguyên lịch tai nạn trên, `adaptive` giảm thời gian trung bình từ **7,73 xuống 7,02 phút/xe**, tương đương **9,12%** tổng thời gian. Hai lượt đều hoàn thành đủ xe; giữ tuyến gốc có 1 xe bị dịch chuyển, `adaptive` có 0. Kết quả phản ánh một hạt giống và một vùng. [So sánh hai mức nhu cầu và lệnh chạy lại](output/bologna/regional-incident/ket-qua.md#trường-hợp-giảm-số-xe)

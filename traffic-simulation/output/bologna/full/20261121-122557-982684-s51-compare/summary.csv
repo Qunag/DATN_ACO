@@ -1,0 +1,6 @@
+seed,policy,requested,considered,finished_in_sumo,arrived,ended_by_teleport,arrived_without_teleport,teleported_vehicles,removed_other,unfinished,complete,total_s,mean_s,p95_s,loaded,with_alternative,rerouted,rejected,teleports,colliding_vehicle_events,end_s
+51,original,8779,8779,8779,8779,0,8779,0,0,0,True,3861212.0,439.824,1822.0,8779,0,0,0,0,0,5655.0
+51,equal,8779,8779,8779,8779,0,8611,168,0,0,True,15589609.0,1775.784,7439.0,8779,6310,3138,0,177,0,15583.0
+51,previous,8779,8779,8779,8779,0,8702,77,0,0,True,10222016.0,1164.371,5325.0,8779,6310,2350,0,83,0,14304.0
+51,queue,8779,8779,8779,8779,0,8763,16,0,0,True,7364856.0,838.917,3438.0,8779,6310,2049,0,16,0,8551.0
+51,adaptive,8779,8779,8779,8779,0,8779,0,0,0,True,3749983.0,427.154,1702.0,8779,6005,489,0,0,0,5603.0

@@ -1,0 +1,2 @@
+seed,policy,requested,considered,finished_in_sumo,arrived,ended_by_teleport,arrived_without_teleport,teleported_vehicles,removed_other,unfinished,complete,total_s,mean_s,p95_s,loaded,with_alternative,rerouted,rejected,teleports,colliding_vehicle_events,end_s,demand_scale,incident_edge,incident_start_s,incident_end_s,incident_speed_factor,incident_applied,incident_count,incident_edges
+51,original,13169,13169,13169,13169,0,13165,4,0,0,True,18119616.0,1375.93,3670.0,13169,0,0,0,4,0,8119.0,1.5,200,900,1800,0.2,True,3,200 33 135

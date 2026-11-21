@@ -7,6 +7,7 @@ osm_runner.py – Chạy ACO Routing trên bản đồ OSM thực tế
 Script tích hợp ACO với SUMO trên bản đồ thực (OSM):
   - mode compare: So sánh 5 thuật toán tại các snapshot
   - mode reroute: Dynamic rerouting ACO theo thời gian thực
+  - mode fleet: Phân luồng mọi xe do SUMO sinh trên mạng OSM
 
 Khác biệt so với aco_runner.py (mạng 3×3):
   - Mạng đường thực: 600+ nút, 1200+ cạnh
@@ -663,6 +664,8 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Ví dụ:
+  python -m scripts.osm.osm_runner --mode fleet
+  python -m scripts.osm.osm_runner --nogui --mode fleet --policy compare --seed 51
   python -m scripts.osm.osm_runner --nogui --mode compare --duration 600
   python -m scripts.osm.osm_runner --nogui --mode reroute --duration 600
   python -m scripts.osm.osm_runner --nogui --mode compare --n-ants 50 --iterations 100
@@ -671,10 +674,34 @@ Ví dụ:
     parser.add_argument("--nogui", action="store_true",
                         help="Không mở SUMO-GUI")
     parser.add_argument("--mode", type=str, default="compare",
-                        choices=["compare", "reroute"],
-                        help="Chế độ: compare (so sánh) hoặc reroute (tái định tuyến)")
-    parser.add_argument("--duration", type=int, default=600,
-                        help="Thời gian mô phỏng (giây, mặc định: 600)")
+                        choices=["compare", "reroute", "fleet"],
+                        help="compare (snapshot), reroute (xe ACO) hoặc fleet (mọi xe)")
+    parser.add_argument("--duration", type=int,
+                        help="Giới hạn giây mô phỏng. Fleet mặc định chạy đến khi hết xe, chế độ cũ 600 giây.")
+    parser.add_argument("--policy", choices=["adaptive", "queue", "original", "equal", "previous", "compare"],
+                        default="adaptive", help="Cách phân luồng trong chế độ fleet (mặc định: adaptive)")
+    parser.add_argument("--seed", type=int, default=51, help="Hạt giống SUMO và phân luồng cho fleet")
+    parser.add_argument("--output-dir", help="Thư mục chứa các lượt fleet, mỗi lượt có thư mục riêng")
+    parser.add_argument("--demand-scale", type=float, default=1,
+                        help="Hệ số nhân nhu cầu xe trong chế độ fleet (mặc định 1)")
+    parser.add_argument("--gui-delay", type=float, default=0,
+                        help="Độ trễ giữa các bước SUMO-GUI, đơn vị mili giây")
+    parser.add_argument("--pause-at", type=float,
+                        help="Tạm dừng SUMO-GUI tại giây mô phỏng để quan sát")
+    parser.add_argument("--incident", action="store_true",
+                        help="Mô phỏng một đoạn đường ngẫu nhiên bị tai nạn trong chế độ fleet")
+    parser.add_argument("--incident-dynamic", action="store_true",
+                        help="Phát sinh tai nạn nhiều mức độ nối tiếp trong một vùng, chế độ fleet")
+    parser.add_argument("--incident-area", type=float, nargs=4, metavar=("XMIN", "YMIN", "XMAX", "YMAX"),
+                        help="Giới hạn tai nạn trong vùng chữ nhật, tọa độ SUMO tính bằng mét")
+    parser.add_argument("--incident-start", type=float, default=900,
+                        help="Giây mô phỏng bắt đầu tai nạn (mặc định 900)")
+    parser.add_argument("--incident-duration", type=float,
+                        help="Giây tồn tại sự cố cố định hoặc thời gian phát sinh sự cố động (mặc định 900/2700)")
+    parser.add_argument("--incident-speed-factor", type=float, default=.2,
+                        help="Tỷ lệ tốc độ còn lại cho tai nạn cố định (mặc định 0.2)")
+    parser.add_argument("--incident-count", type=int,
+                        help="Số tai nạn cố định hoặc tối đa đồng thời trong chế độ động (mặc định 1/5)")
     parser.add_argument("--net", type=str, default=None,
                         help="File net.xml (mặc định: osm/map2.net.xml)")
     parser.add_argument("--cfg", type=str, default=None,
@@ -700,10 +727,36 @@ Ví dụ:
 if __name__ == "__main__":
     args = parse_args()
 
-    if args.mode == "compare":
+    if (args.incident or args.incident_dynamic) and args.mode != "fleet":
+        raise SystemExit("Các tham số tai nạn dùng cùng --mode fleet")
+    if args.mode == "fleet":
+        setup_sumo_path()
+        from scripts.osm.fleet import run_fleet
+        if args.duration is not None and args.duration <= 0:
+            raise SystemExit("--duration phải lớn hơn 0")
+        incident = None
+        if args.incident or args.incident_dynamic:
+            dynamic = args.incident_dynamic
+            incident_duration = args.incident_duration
+            incident_count = args.incident_count
+            if incident_duration is None:
+                incident_duration = 2700 if dynamic else 900
+            if incident_count is None:
+                incident_count = 5 if dynamic else 1
+            incident = dict(start=args.incident_start,
+                            duration=incident_duration, count=incident_count,
+                            area=args.incident_area)
+            if dynamic:
+                incident["dynamic"] = True
+            else:
+                incident["speed_factor"] = args.incident_speed_factor
+        run_fleet(args.cfg or DEFAULT_CFG_FILE, args.net, not args.nogui, args.duration,
+                  args.policy, args.seed, args.output_dir, incident=incident,
+                  demand_scale=args.demand_scale, gui_delay=args.gui_delay, pause_at=args.pause_at)
+    elif args.mode == "compare":
         run_compare(
             use_gui      = not args.nogui,
-            duration     = args.duration,
+            duration     = 600 if args.duration is None else args.duration,
             snapshot_at  = args.snapshot_at,
             net_file     = args.net,
             cfg_file     = args.cfg,
@@ -714,7 +767,7 @@ if __name__ == "__main__":
     elif args.mode == "reroute":
         run_reroute(
             use_gui          = not args.nogui,
-            duration         = args.duration,
+            duration         = 600 if args.duration is None else args.duration,
             net_file         = args.net,
             cfg_file         = args.cfg,
             n_ants           = args.n_ants,

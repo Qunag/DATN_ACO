@@ -1,0 +1,14 @@
+id,edge,start_s,end_s,severity,speed_factor
+incident-0001,171,900,1500,moderate,0.4
+incident-0002,80,1186,1486,light,0.7
+incident-0003,186,1452,2052,moderate,0.4
+incident-0004,58[1],1681,1981,light,0.7
+incident-0005,69,1884,2484,moderate,0.4
+incident-0006,224[1],2087,2387,light,0.7
+incident-0007,79,2214,2514,light,0.7
+incident-0008,74,2508,3708,severe,0.2
+incident-0009,122,2721,3921,severe,0.2
+incident-0010,188,2864,4664,critical,0.1
+incident-0011,103,3128,3428,light,0.7
+incident-0012,97,3386,3686,light,0.7
+incident-0013,78[1][1],3540,4740,severe,0.2

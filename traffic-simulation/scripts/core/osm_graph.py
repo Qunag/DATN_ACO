@@ -529,6 +529,7 @@ class OSMAntColonyOptimizer:
         rho_min:      float = 0.05,
         rho_max:      float = 0.3,
         seed_with_dijkstra: bool = True,
+        rng=None,
     ):
         """
         Args:
@@ -557,6 +558,7 @@ class OSMAntColonyOptimizer:
         self.rho_min = rho_min
         self.rho_max = rho_max
         self.seed_with_dijkstra = seed_with_dijkstra
+        self.rng = random if rng is None else rng
 
         # Pheromone
         self.pheromone: Dict[Tuple[str, str], float] = {}
@@ -671,12 +673,12 @@ class OSMAntColonyOptimizer:
 
         total = sum(probabilities)
         if total == 0:
-            return random.choice(candidates)
+            return self.rng.choice(candidates)
 
         probabilities = [p / total for p in probabilities]
 
         # Roulette wheel selection
-        r = random.random()
+        r = self.rng.random()
         cumulative = 0.0
         for i, prob in enumerate(probabilities):
             cumulative += prob
