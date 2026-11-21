@@ -39,7 +39,7 @@ class _MapScreenState extends State<MapScreen> {
   RouteOption? _selectedRoute;
   OptimizationComparison? _comparison;
   bool _isLoadingRoutes = false;
-  bool _showTrafficLayer = false;
+  bool _showTrafficLayer = true;
 
   // ── TRẠNG THÁI MÔ PHỎNG 2 XE CHẠY THỬ NGHIỆM (DIJKSTRA vs ACO) ──
   bool _isCarSimulationRunning = false;
@@ -90,7 +90,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _pollTrafficUpdate() async {
     if (!mounted) return;
     final apiService = context.read<ApiService>();
-    final trafficData = await apiService.fetchLiveTraffic();
+    final trafficData = await apiService.fetchLiveTraffic(scenario: _sumoScenario);
 
     if (mounted) {
       setState(() {
@@ -379,7 +379,7 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
 
-              // VẼ CÁC TUYẾN ĐƯỜNG THAY THẾ (Màu xám #80868B)
+              // VẼ CÁC TUYẾN ĐƯỜNG THAY THẾ (Đa sắc màu với độ mờ nhẹ)
               if (_routes.isNotEmpty)
                 PolylineLayer(
                   polylines: _routes
@@ -388,33 +388,51 @@ class _MapScreenState extends State<MapScreen> {
                             Polyline(
                               points: r.coordinates,
                               strokeWidth: 6.5,
-                              color: r.hasAccident ? const Color(0xFF991B1B).withValues(alpha: 0.5) : const Color(0xFF5F6368).withValues(alpha: 0.5),
+                              color: const Color(0xFF64748B).withValues(alpha: 0.35),
                             ),
-                            Polyline(
-                              points: r.coordinates,
-                              strokeWidth: 4.8,
-                              color: r.hasAccident ? const Color(0xFFDC2626) : const Color(0xFF80868B),
-                            ),
+                            if (r.segments.isNotEmpty)
+                              ...r.segments.map(
+                                (seg) => Polyline(
+                                  points: seg.points,
+                                  strokeWidth: 4.2,
+                                  color: seg.color.withValues(alpha: 0.65),
+                                ),
+                              )
+                            else
+                              Polyline(
+                                points: r.coordinates,
+                                strokeWidth: 4.2,
+                                color: r.hasAccident ? const Color(0xFFDC2626) : const Color(0xFF80868B),
+                              ),
                           ])
                       .toList(),
                 ),
 
-              // VẼ TUYẾN ĐƯỢC CHỌN (Xanh dương Google Maps #1A73E8 hoặc Đỏ nếu dính tai nạn)
+              // VẼ TUYẾN ĐƯỢC CHỌN (ĐA SẮC MÀU GOOGLE MAPS: XANH LÁ / VÀNG / CAM / ĐỎ / ĐỎ SẪM)
               if (_selectedRoute != null && _selectedRoute!.coordinates.isNotEmpty)
                 PolylineLayer(
                   polylines: [
+                    // Lớp viền nền đậm (Casing) giúp dải màu nổi bật trên bản đồ Google Maps
                     Polyline(
                       points: _selectedRoute!.coordinates,
-                      strokeWidth: 9.0,
-                      color: _selectedRoute!.hasAccident
-                          ? const Color(0xFF991B1B).withValues(alpha: 0.45)
-                          : const Color(0xFF1557B0).withValues(alpha: 0.4),
+                      strokeWidth: 8.5,
+                      color: const Color(0xFF1E293B).withValues(alpha: 0.35),
                     ),
-                    Polyline(
-                      points: _selectedRoute!.coordinates,
-                      strokeWidth: 6.0,
-                      color: _selectedRoute!.hasAccident ? const Color(0xFFDC2626) : const Color(0xFF1A73E8),
-                    ),
+                    // Từng phân đoạn màu sắc thực tế theo Kịch bản SUMO & Tai nạn
+                    if (_selectedRoute!.segments.isNotEmpty)
+                      ..._selectedRoute!.segments.map(
+                        (seg) => Polyline(
+                          points: seg.points,
+                          strokeWidth: 5.5,
+                          color: seg.color,
+                        ),
+                      )
+                    else
+                      Polyline(
+                        points: _selectedRoute!.coordinates,
+                        strokeWidth: 5.5,
+                        color: _selectedRoute!.hasAccident ? const Color(0xFFDC2626) : const Color(0xFF1A73E8),
+                      ),
                   ],
                 ),
 
@@ -984,6 +1002,7 @@ class _MapScreenState extends State<MapScreen> {
                                 if (val != null) {
                                   setState(() => _sumoScenario = val);
                                   _fetchRoutes();
+                                  _pollTrafficUpdate();
                                 }
                               },
                             ),

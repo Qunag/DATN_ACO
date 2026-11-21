@@ -1,6 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
+/// Phân đoạn màu sắc giao thông thời gian thực trên tuyến đường (Xanh - Vàng - Cam - Đỏ - Đỏ sẫm)
+class RouteSegment {
+  final List<LatLng> points;
+  final Color color;
+  final double speedKmh;
+  final String desc;
+
+  RouteSegment({
+    required this.points,
+    required this.color,
+    required this.speedKmh,
+    required this.desc,
+  });
+
+  factory RouteSegment.fromJson(Map<dynamic, dynamic> json) {
+    var rawPts = json['points'] as List? ?? [];
+    List<LatLng> pts = rawPts.map((p) {
+      final arr = p as List;
+      return LatLng((arr[0] as num).toDouble(), (arr[1] as num).toDouble());
+    }).toList();
+
+    String hex = json['color']?.toString() ?? '#10B981';
+    Color parsedColor = const Color(0xFF10B981);
+    try {
+      hex = hex.replaceAll('#', '');
+      if (hex.length == 6) {
+        parsedColor = Color(int.parse('0xFF$hex'));
+      }
+    } catch (_) {}
+
+    return RouteSegment(
+      points: pts,
+      color: parsedColor,
+      speedKmh: (json['speed_kmh'] as num?)?.toDouble() ?? 40.0,
+      desc: json['desc']?.toString() ?? '',
+    );
+  }
+}
+
 /// Đại diện cho 1 tuyến đường gợi ý trong Top-K của giải thuật T-ACO
 class RouteOption {
   final String routeId;
@@ -12,6 +51,7 @@ class RouteOption {
   final double probability;
   final double probabilityPct;
   final List<LatLng> coordinates;
+  final List<RouteSegment> segments;
   final bool isBlocked;
   final bool hasAccident;
   final String statusDesc;
@@ -26,6 +66,7 @@ class RouteOption {
     required this.probability,
     required this.probabilityPct,
     required this.coordinates,
+    required this.segments,
     this.isBlocked = false,
     this.hasAccident = false,
     this.statusDesc = 'Bình thường',
@@ -38,6 +79,26 @@ class RouteOption {
       return LatLng((p[0] as num).toDouble(), (p[1] as num).toDouble());
     }).toList();
 
+    var rawSegs = json['segments'] as List? ?? [];
+    List<RouteSegment> segments = rawSegs
+        .map((s) => RouteSegment.fromJson(s as Map<dynamic, dynamic>))
+        .toList();
+
+    // Nếu không có segments từ backend, tự động tạo segment mặc định
+    if (segments.isEmpty && coords.isNotEmpty) {
+      final defaultColor = (json['has_accident'] == true)
+          ? const Color(0xFFDC2626)
+          : const Color(0xFF1A73E8);
+      segments = [
+        RouteSegment(
+          points: coords,
+          color: defaultColor,
+          speedKmh: 40.0,
+          desc: json['status_desc']?.toString() ?? '',
+        )
+      ];
+    }
+
     return RouteOption(
       routeId: json['route_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -48,6 +109,7 @@ class RouteOption {
       probability: (json['probability'] as num?)?.toDouble() ?? 0.0,
       probabilityPct: (json['probability_pct'] as num?)?.toDouble() ?? 0.0,
       coordinates: coords,
+      segments: segments,
       isBlocked: json['is_blocked'] == true,
       hasAccident: json['has_accident'] == true,
       statusDesc: json['status_desc']?.toString() ?? 'Bình thường',

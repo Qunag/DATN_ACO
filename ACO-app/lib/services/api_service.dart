@@ -13,11 +13,11 @@ class ApiService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Lấy danh sách trạng thái đường (màu sắc) và các xe đang lưu thông
-  Future<Map<String, dynamic>> fetchLiveTraffic() async {
+  /// Lấy danh sách trạng thái đường (màu sắc) và các xe đang lưu thông theo kịch bản SUMO
+  Future<Map<String, dynamic>> fetchLiveTraffic({String scenario = 'TH3'}) async {
     try {
       final response = await http
-          .get(Uri.parse('$_baseUrl/api/traffic/live-status'))
+          .get(Uri.parse('$_baseUrl/api/traffic/live-status?scenario=$scenario'))
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
